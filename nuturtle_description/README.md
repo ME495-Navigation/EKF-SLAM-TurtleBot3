@@ -2,9 +2,13 @@
 URDF files for Nuturtle Gizmo.
 * `ros2 launch nuturtle_description load_one.launch.py` to see the robot in rviz.
 * `ros2 launch nuturtle_description load_all.launch.xml` to see four copies of the robot in rviz.
+
 ![](images/rviz.png)
+
 * The rqt_graph when all four robots are visualized (Nodes Only, Hide Debug) is:
+
 ![](images/rqt_graph.svg)
+
 # Launch File Details
 * `ros2 launch nuturtle_description load_one.launch.py --show-args` to show arguments of load_one.launch.py
 
@@ -27,7 +31,7 @@ URDF files for Nuturtle Gizmo.
 
 * `ros2 launch nuturtle_description load_all.launch.xml --show-args` to show arguments of load_all.launch.xml
 
-  ```
+```
   Arguments (pass arguments as '<name>:=<value>'):
 
     'use_jsp':
