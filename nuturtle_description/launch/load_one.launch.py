@@ -34,9 +34,9 @@ def generate_launch_description():
                 {"robot_description" :
                  Command([TextSubstitution(text="xacro "),
                           PathJoinSubstitution(
-                              [FindPackageShare("nuturtle_description"), "urdf", "turtlebot3_burger.urdf.xacro"])]),
+                              [FindPackageShare("nuturtle_description"), "urdf", "turtlebot3_burger.urdf.xacro"]), TextSubstitution(text=" color:="), LaunchConfiguration("color")]),
                  "frame_prefix" : [LaunchConfiguration("color"), TextSubstitution(text="/")]
-                              }
+                }
             ]
             ),
         Node(

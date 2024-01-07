@@ -10,7 +10,13 @@
   <xacro:property name="track_width"  value="${params['track_width']}" />
   <xacro:property name="collision_radius"  value="${params['collision_radius']}" />
 
+  <xacro:arg name="color" default="purple"/>
+
   <!-- Init colour -->
+  <material name="purple">
+      <color rgba="0.3 0.16 0.52 1.0"/>
+  </material>
+
   <material name="black">
       <color rgba="0.0 0.0 0.0 1.0"/>
   </material>
@@ -65,7 +71,7 @@
       <geometry>
         <mesh filename="package://nuturtle_description/meshes/burger_base.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="light_black"/>
+      <material name="$(arg color)"/>
     </visual>
 
     <xacro:if value="${collision_radius &gt; 0}">
