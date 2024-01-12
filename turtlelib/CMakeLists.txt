@@ -93,17 +93,17 @@ if(${DOXYGEN_FOUND} AND ${BUILD_DOCS})
     # The main page is build/html/index.html
 endif()
 
-# include(CTest)
+include(CTest)
 
 # CTest sets BUILD_TESTING to on. To disable tests add -DBUILD_TESTING=OFF when invoking cmake
-# if(BUILD_TESTING)
-#     # Find the Unit testing framework. In this example, Catch2
-#     find_package(Catch2 3 REQUIRED)
+if(BUILD_TESTING)
+    # Find the Unit testing framework. In this example, Catch2
+    find_package(Catch2 3 REQUIRED)
 
-#     # A test is just an executable that is linked against the unit testing library
-#     add_executable(my_test_exe tests/mytest.cpp)
-#     target_link_libraries(my_test_exe Catch2::Catch2WithMain)
+    # A test is just an executable that is linked against the unit testing library
+    add_executable(my_test_exe tests/test_geometry2.cpp tests/test_se2.cpp)
+    target_link_libraries(my_test_exe Catch2::Catch2WithMain)
 
-#     # register the test with CTest, telling it what executable to run
-#     add_test(NAME the_test_name COMMAND my_test_exe)
-# endif()
+    # register the test with CTest, telling it what executable to run
+    add_test(NAME the_test_name COMMAND my_test_exe)
+endif()
