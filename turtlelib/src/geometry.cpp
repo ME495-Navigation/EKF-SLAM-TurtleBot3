@@ -1,5 +1,17 @@
 #include <turtlelib/geometry2d.hpp>
 
-double turtlelib::normalize_angle(double rad){
-    return 0.0;
+namespace turtlelib{
+double normalize_angle(double rad){
+
+    // double epsilon=1.0e-12;
+    while(rad > PI)
+    {
+        rad -= 2.0*PI;
+    }
+    while(rad < - PI)
+    {
+        rad += 2.0*PI;
+    }
+    return rad;
+}
 }

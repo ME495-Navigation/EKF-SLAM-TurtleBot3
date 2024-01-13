@@ -51,11 +51,11 @@ namespace turtlelib
     /// You should also purposely (and temporarily) make one of these tests fail
     /// just to see what happens
     static_assert(almost_equal(0, 0), "is_zero failed");
-
+    static_assert(almost_equal(1.2, 1.2), "is_zero failed");
     static_assert(almost_equal(deg2rad(0.0), 0.0), "deg2rad failed");
-
+    static_assert(almost_equal(deg2rad(180.0), PI), "deg2rad failed");
     static_assert(almost_equal(rad2deg(0.0), 0.0), "rad2deg) failed");
-
+    static_assert(almost_equal(rad2deg(PI), 180.0), "rad2deg) failed");
     static_assert(almost_equal(deg2rad(rad2deg(2.1)), 2.1), "deg2rad failed");
 
     /// \brief a 2-Dimensional Point
