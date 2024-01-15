@@ -1,4 +1,5 @@
 #include <turtlelib/geometry2d.hpp>
+#include <iostream>
 
 namespace turtlelib{
 double normalize_angle(double rad){
@@ -14,4 +15,10 @@ double normalize_angle(double rad){
     }
     return rad;
 }
+
+std::ostream & operator<<(std::ostream & os, const Point2D & p)
+{
+    return os << "[" << p.x << " " << p.y << "]";
+}
+
 }
