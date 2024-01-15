@@ -2,9 +2,8 @@
 #include <iostream>
 
 namespace turtlelib{
-double normalize_angle(double rad){
-
-    // double epsilon=1.0e-12;
+double normalize_angle(double rad)
+{
     while(rad > PI)
     {
         rad -= 2.0*PI;
@@ -71,6 +70,14 @@ Vector2D operator-(const Point2D & head, const Point2D & tail)
     vec.x = head.x - tail.x;
     vec.y = head.y - tail.y;
     return vec;
+}
+
+Point2D operator+(const Point2D & tail, const Vector2D & disp)
+{
+    Point2D p;
+    p.x = tail.x + disp.x;
+    p.y = tail.y + disp.y;
+    return p;
 }
 
 }

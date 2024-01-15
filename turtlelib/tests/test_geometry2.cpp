@@ -80,4 +80,18 @@ TEST_CASE( "vector formation", "[vector]" ) {
     REQUIRE( vec.x == 2.0 );
     REQUIRE( vec.y == 3.0 );
 }
+
+TEST_CASE( "point displacement", "[point]" ) {
+    Point2D p, tail;
+    Vector2D vec;
+
+    vec.x = 4.0;
+    vec.y = 4.0;
+    tail.x = 2.0;
+    tail.y = 1.0;
+    p = tail + vec;
+
+    REQUIRE( p.x == 6.0 );
+    REQUIRE( p.y == 5.0 );
+}
 }
