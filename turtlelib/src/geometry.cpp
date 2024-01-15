@@ -23,14 +23,14 @@ std::ostream & operator<<(std::ostream & os, const Point2D & p)
 
 std::istream & operator>>(std::istream & is, Point2D & p)
 {
-    char next = is.peek();
+    char next = is.peek(); //look at next character
 
     if(next == '[')
     {
-        is.get();
+        is.get(); //remove next character if it is '['
         is >> p.x;
         is >> p.y;
-        is.get();
+        is.get(); //remove ']'
     }
     else
     {
@@ -50,12 +50,12 @@ std::istream & operator>>(std::istream & is, Vector2D & v)
 {
     char next = is.peek();
 
-    if(next == '[')
+    if(next == '[') //look at next character
     {
-        is.get();
+        is.get(); //remove next character if it is '['
         is >> v.x;
         is >> v.y;
-        is.get();
+        is.get(); //remove ']'
     }
     else
     {
@@ -64,4 +64,13 @@ std::istream & operator>>(std::istream & is, Vector2D & v)
 
     return is;
 }
+
+Vector2D operator-(const Point2D & head, const Point2D & tail)
+{
+    Vector2D vec;
+    vec.x = head.x - tail.x;
+    vec.y = head.y - tail.y;
+    return vec;
+}
+
 }

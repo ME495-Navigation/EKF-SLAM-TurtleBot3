@@ -17,7 +17,7 @@ TEST_CASE( "angle is normalized", "[normalize]" ) {
     REQUIRE_THAT(normalize_angle(-5*PI/2.0), Catch::Matchers::WithinRel(-PI/2.0));
 }
 
-TEST_CASE( "output stream 2d point", "[2d point output stream]" ) {
+TEST_CASE( "output stream 2d point", "[point]" ) {
     Point2D point;
     point.x = 5.7;
     point.y = 6.3;
@@ -26,7 +26,7 @@ TEST_CASE( "output stream 2d point", "[2d point output stream]" ) {
     REQUIRE( os.str() == "[5.7 6.3]" );
 }
 
-TEST_CASE( "output stream vector", "[2d vector output stream]" ) {
+TEST_CASE( "output stream vector", "[vector]" ) {
     Vector2D vector;
     vector.x = 2.7;
     vector.y = 0.93;
@@ -35,7 +35,7 @@ TEST_CASE( "output stream vector", "[2d vector output stream]" ) {
     REQUIRE( os.str() == "[2.7 0.93]" );
 }
 
-TEST_CASE( "input stream 2d point", "[2d point input stream]" ) {
+TEST_CASE( "input stream 2d point", "[point]" ) {
     Point2D point_1, point_2;
     std::stringstream is_1,is_2;
 
@@ -51,7 +51,7 @@ TEST_CASE( "input stream 2d point", "[2d point input stream]" ) {
     REQUIRE( point_2.y == 1.32 );
 }
 
-TEST_CASE( "input stream vector", "[2d vector input stream]" ) {
+TEST_CASE( "input stream vector", "[vector]" ) {
     Vector2D vector_1, vector_2;
     std::stringstream is_1,is_2;
 
@@ -65,5 +65,19 @@ TEST_CASE( "input stream vector", "[2d vector input stream]" ) {
     REQUIRE( vector_1.y == 0.93 );
     REQUIRE( vector_2.x == 2.5 );
     REQUIRE( vector_2.y == 0.97 );
+}
+
+TEST_CASE( "vector formation", "[vector]" ) {
+    Point2D head, tail;
+    Vector2D vec;
+
+    head.x = 4.0;
+    head.y = 4.0;
+    tail.x = 2.0;
+    tail.y = 1.0;
+    vec = head - tail;
+
+    REQUIRE( vec.x == 2.0 );
+    REQUIRE( vec.y == 3.0 );
 }
 }
