@@ -40,4 +40,18 @@ Transform2D::Transform2D(double radians): trans2d(), rot2d(radians)
 
 Transform2D::Transform2D(Vector2D trans, double radians): trans2d(trans), rot2d(radians)
 {}
+
+Point2D Transform2D::operator()(Point2D p) const
+{
+    Point2D p_new;
+    p_new.x = trans2d.x + p.x;
+    p_new.y = trans2d.y + p.y;
+    return p_new;
+}
+
+Vector2D Transform2D::operator()(Vector2D v) const
+{
+    return {v.x*cos(rot2d)-v.y*sin(rot2d)+trans2d.x, v.x*sin(rot2d)+v.y*cos(rot2d)+trans2d.y};
+}
+
 }
