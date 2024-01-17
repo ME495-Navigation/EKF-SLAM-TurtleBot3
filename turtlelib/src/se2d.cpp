@@ -45,15 +45,15 @@ Transform2D::Transform2D(Vector2D trans, double radians): trans2d(trans), rot2d(
 Point2D Transform2D::operator()(Point2D p) const
 {
     Point2D p_new;
-    p_new.x = trans2d.x + p.x;
-    p_new.y = trans2d.y + p.y;
+    p_new.x = p.x*cos(rot2d)-p.y*sin(rot2d)+trans2d.x;
+    p_new.y = p.x*sin(rot2d)+p.y*cos(rot2d)+trans2d.y;
     return p_new;
 }
 
 Vector2D Transform2D::operator()(Vector2D v) const
 {
-    return {v.x*cos(rot2d)-v.y*sin(rot2d)+trans2d.x, 
-    v.x*sin(rot2d)+v.y*cos(rot2d)+trans2d.y};
+    return {v.x*cos(rot2d)-v.y*sin(rot2d), 
+    v.x*sin(rot2d)+v.y*cos(rot2d)};
 }
 
 Twist2D Transform2D::operator()(Twist2D v) const
