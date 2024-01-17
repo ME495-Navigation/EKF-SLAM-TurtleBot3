@@ -67,4 +67,23 @@ Transform2D Transform2D::inv() const
     return {{-trans2d.x*cos(rot2d)-trans2d.y*sin(rot2d), -trans2d.y*cos(rot2d)+trans2d.x*sin(rot2d)}, -rot2d};
 }
 
+Transform2D & Transform2D::operator*=(const Transform2D & rhs)
+{
+    rot2d = rot2d + rhs.rot2d;
+    trans2d.x = rhs.trans2d.x*cos(rot2d)-rhs.trans2d.y*sin(rot2d) + trans2d.x;
+    trans2d.y = rhs.trans2d.x*sin(rot2d)+rhs.trans2d.y*cos(rot2d) + trans2d.y;
+    return *this;
+}
+
+Vector2D Transform2D::translation() const
+{
+    return {trans2d.x , trans2d.y};
+}
+
+double Transform2D::rotation() const
+{
+    return rot2d;
+}
+
+
 }
