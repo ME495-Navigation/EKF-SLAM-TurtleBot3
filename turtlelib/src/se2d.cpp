@@ -51,7 +51,20 @@ Point2D Transform2D::operator()(Point2D p) const
 
 Vector2D Transform2D::operator()(Vector2D v) const
 {
-    return {v.x*cos(rot2d)-v.y*sin(rot2d)+trans2d.x, v.x*sin(rot2d)+v.y*cos(rot2d)+trans2d.y};
+    return {v.x*cos(rot2d)-v.y*sin(rot2d)+trans2d.x, 
+    v.x*sin(rot2d)+v.y*cos(rot2d)+trans2d.y};
+}
+
+Twist2D Transform2D::operator()(Twist2D v) const
+{
+    return {v.omega,
+            v.omega*trans2d.y+v.x*cos(rot2d)-v.y*sin(rot2d),
+            -v.omega*trans2d.x+v.x*sin(rot2d)+v.y*cos(rot2d)};
+}
+
+Transform2D Transform2D::inv() const
+{
+    return {{-trans2d.x*cos(rot2d)-trans2d.y*sin(rot2d), -trans2d.y*cos(rot2d)+trans2d.x*sin(rot2d)}, -rot2d};
 }
 
 }
