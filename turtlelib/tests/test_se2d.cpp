@@ -8,7 +8,7 @@
 
 
 namespace turtlelib{
-TEST_CASE( "output stream twist", "[twist]" ) //Abhishek Sankar
+TEST_CASE( "output stream twist", "[twist]" ) //Abhishek, Sankar
 {
     Twist2D twist;
     twist.omega = 7.7;
@@ -19,7 +19,7 @@ TEST_CASE( "output stream twist", "[twist]" ) //Abhishek Sankar
     REQUIRE( os.str() == "[7.7 8.12 1.93]" );
 }
 
-TEST_CASE( "input stream twist", "[twist]" ) //Abhishek Sankar
+TEST_CASE( "input stream twist", "[twist]" ) //Abhishek, Sankar
 {
     Twist2D twist_1,twist_2;
     std::stringstream is_1,is_2;
@@ -38,7 +38,7 @@ TEST_CASE( "input stream twist", "[twist]" ) //Abhishek Sankar
     REQUIRE( twist_2.y == 86.0 );
 }
 
-TEST_CASE( "output stream transform", "[transform]" ) //Abhishek Sankar
+TEST_CASE( "output stream transform", "[transform]" ) //Abhishek, Sankar
 {
     Transform2D transform(Vector2D{2.3,3.1}, PI);
     std::stringstream os;
@@ -46,7 +46,7 @@ TEST_CASE( "output stream transform", "[transform]" ) //Abhishek Sankar
     REQUIRE( os.str() == "deg: 180 x: 2.3 y: 3.1" );
 }
 
-TEST_CASE( "input stream transform", "[transform]" ) //Abhishek Sankar
+TEST_CASE( "input stream transform", "[transform]" ) //Abhishek, Sankar
 {
     Transform2D transform_1,transform_2,transform_3;
 
@@ -72,7 +72,7 @@ TEST_CASE( "input stream transform", "[transform]" ) //Abhishek Sankar
     REQUIRE_THAT(transform_3.translation().y, Catch::Matchers::WithinRel(3.1));
 }
 
-TEST_CASE( "transform multiplication", "[transform]" ) //Abhishek Sankar
+TEST_CASE( "transform multiplication", "[transform]" ) //Abhishek, Sankar
 {
     Transform2D transform_1(Vector2D{1.0,1.0}, 0.0);
     Transform2D transform_2(Vector2D{2.0,2.0}, PI/2.0);
@@ -93,6 +93,24 @@ TEST_CASE("inv() Transform" "[se2d]") // Rahul,Roy
     REQUIRE_THAT(trans.inv().rotation(), Catch::Matchers::WithinAbs(-a, 1e-5));
     REQUIRE_THAT(trans.inv().translation().x, Catch::Matchers::WithinAbs(-1.0, 1e-5));
     REQUIRE_THAT(trans.inv().translation().y, Catch::Matchers::WithinAbs(0.0, 1e-5));
+
+}
+
+TEST_CASE("rotation()" "[se2d]") // Rahul,Roy
+{
+    double angle_test= 5.0;
+    turtlelib::Transform2D test{angle_test};
+    REQUIRE_THAT(test.rotation(), Catch::Matchers::WithinAbs(angle_test, 1e-5));
+
+}
+
+TEST_CASE("translation()" "[se2d]") // Rahul,Roy
+{
+    double x_test= 5.0;
+    double y_test= 3.0;
+    turtlelib::Transform2D test{{x_test,y_test}};
+    REQUIRE_THAT(test.translation().x, Catch::Matchers::WithinAbs(x_test, 1e-5));
+    REQUIRE_THAT(test.translation().y, Catch::Matchers::WithinAbs(y_test, 1e-5));
 
 }
 
