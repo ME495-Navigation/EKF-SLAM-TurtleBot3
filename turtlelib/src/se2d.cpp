@@ -88,7 +88,7 @@ double Transform2D::rotation() const
 
 std::ostream & operator<<(std::ostream & os, const Transform2D & tf)
 {
-    return os << "deg: " << rad2deg(tf.rot2d) <<" x: "<< tf.trans2d.x << " y: " << tf.trans2d.y << std::endl;
+    return os << "deg: " << rad2deg(tf.rot2d) <<" x: "<< tf.trans2d.x << " y: " << tf.trans2d.y;
 }
 
 std::istream & operator>>(std::istream & is, Transform2D & tf)
@@ -111,13 +111,14 @@ std::istream & operator>>(std::istream & is, Transform2D & tf)
     {
         is >> rotation >> translation.x >> translation.y;
     }
-    tf = Transform2D(translation, rotation);
+    tf = Transform2D(translation, deg2rad(rotation));
     return is;
 }
 
 Transform2D operator*(Transform2D lhs, const Transform2D & rhs)
 {
-    return lhs *= rhs;
+    lhs *= rhs;
+    return lhs;
 }
 
 }

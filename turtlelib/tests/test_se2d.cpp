@@ -8,7 +8,8 @@
 
 
 namespace turtlelib{
-TEST_CASE( "output stream twist", "[twist]" ) {
+TEST_CASE( "output stream twist", "[twist]" ) //Abhishek Sankar
+{
     Twist2D twist;
     twist.omega = 7.7;
     twist.x = 8.12;
@@ -18,7 +19,8 @@ TEST_CASE( "output stream twist", "[twist]" ) {
     REQUIRE( os.str() == "[7.7 8.12 1.93]" );
 }
 
-TEST_CASE( "input stream twist", "[twist]" ) {
+TEST_CASE( "input stream twist", "[twist]" ) //Abhishek Sankar
+{
     Twist2D twist_1,twist_2;
     std::stringstream is_1,is_2;
 
@@ -35,4 +37,63 @@ TEST_CASE( "input stream twist", "[twist]" ) {
     REQUIRE( twist_2.x == 2.14 );
     REQUIRE( twist_2.y == 86.0 );
 }
+
+TEST_CASE( "output stream transform", "[transform]" ) //Abhishek Sankar
+{
+    Transform2D transform(Vector2D{2.3,3.1}, PI);
+    std::stringstream os;
+    os << transform;
+    REQUIRE( os.str() == "deg: 180 x: 2.3 y: 3.1" );
+}
+
+TEST_CASE( "input stream transform", "[transform]" ) //Abhishek Sankar
+{
+    Transform2D transform_1,transform_2,transform_3;
+
+    std::stringstream is_1,is_2,is_3;
+
+    is_1 << "deg: 180 x: 2.3 y: 3.1"; //test type output of << operator
+    is_1 >> transform_1;
+
+    is_2 << "180 2.3 3.1"; //test type separated by spaces
+    is_2 >> transform_2;
+
+    is_3 << "180\n2.3\n3.1"; //test type separated by new line
+    is_3 >> transform_3;
+
+    REQUIRE_THAT(transform_1.rotation(), Catch::Matchers::WithinRel(PI));
+    REQUIRE_THAT(transform_1.translation().x, Catch::Matchers::WithinRel(2.3));
+    REQUIRE_THAT(transform_1.translation().y, Catch::Matchers::WithinRel(3.1));
+    REQUIRE_THAT(transform_2.rotation(), Catch::Matchers::WithinRel(PI));
+    REQUIRE_THAT(transform_2.translation().x, Catch::Matchers::WithinRel(2.3));
+    REQUIRE_THAT(transform_2.translation().y, Catch::Matchers::WithinRel(3.1));
+    REQUIRE_THAT(transform_3.rotation(), Catch::Matchers::WithinRel(PI));
+    REQUIRE_THAT(transform_3.translation().x, Catch::Matchers::WithinRel(2.3));
+    REQUIRE_THAT(transform_3.translation().y, Catch::Matchers::WithinRel(3.1));
+}
+
+TEST_CASE( "transform multiplication", "[transform]" ) //Abhishek Sankar
+{
+    Transform2D transform_1(Vector2D{1.0,1.0}, 0.0);
+    Transform2D transform_2(Vector2D{2.0,2.0}, PI/2.0);
+    Transform2D resulting_transform;
+
+    resulting_transform = transform_1*transform_2;
+
+    REQUIRE_THAT(resulting_transform.rotation(), Catch::Matchers::WithinRel(PI/2.0));
+    REQUIRE_THAT(resulting_transform.translation().x, Catch::Matchers::WithinRel(3.0)); //check
+    REQUIRE_THAT(resulting_transform.translation().y, Catch::Matchers::WithinRel(3.0));
+}
+
+TEST_CASE("inv() Transform" "[se2d]") // Rahul,Roy
+{
+    double a = turtlelib::PI/2.0;
+    turtlelib::Vector2D vec ={0.0,1.0};
+    turtlelib::Transform2D trans = {{vec},a};
+    REQUIRE_THAT(trans.inv().rotation(), Catch::Matchers::WithinAbs(-a, 1e-5));
+    REQUIRE_THAT(trans.inv().translation().x, Catch::Matchers::WithinAbs(-1.0, 1e-5));
+    REQUIRE_THAT(trans.inv().translation().y, Catch::Matchers::WithinAbs(0.0, 1e-5));
+
+}
+
 }

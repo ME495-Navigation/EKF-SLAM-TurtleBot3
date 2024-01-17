@@ -28,11 +28,11 @@ TEST_CASE( "output stream 2d point", "[point]" ) {
 
 TEST_CASE( "output stream vector", "[vector]" ) {
     Vector2D vector;
-    vector.x = 2.7;
+    vector.x = 2.1;
     vector.y = 0.93;
     std::stringstream os;
     os << vector;
-    REQUIRE( os.str() == "[2.7 0.93]" );
+    REQUIRE( os.str() == "[2.1 0.93]" );
 }
 
 TEST_CASE( "input stream 2d point", "[point]" ) {
@@ -55,13 +55,13 @@ TEST_CASE( "input stream vector", "[vector]" ) {
     Vector2D vector_1, vector_2;
     std::stringstream is_1,is_2;
 
-    is_1 << "2.7 0.93";
+    is_1 << "2.0 0.93";
     is_1 >> vector_1;
 
     is_2 << "[2.5 0.97]";
     is_2 >> vector_2;
 
-    REQUIRE( vector_1.x == 2.7 );
+    REQUIRE( vector_1.x == 2.0 );
     REQUIRE( vector_1.y == 0.93 );
     REQUIRE( vector_2.x == 2.5 );
     REQUIRE( vector_2.y == 0.97 );
