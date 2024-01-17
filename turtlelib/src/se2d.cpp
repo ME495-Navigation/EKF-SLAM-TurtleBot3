@@ -1,4 +1,5 @@
 #include <turtlelib/se2d.hpp>
+#include <turtlelib/geometry2d.hpp>
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -85,5 +86,38 @@ double Transform2D::rotation() const
     return rot2d;
 }
 
+std::ostream & operator<<(std::ostream & os, const Transform2D & tf)
+{
+    return os << "deg: " << rad2deg(tf.rot2d) <<" x: "<< tf.trans2d.x << " y: " << tf.trans2d.y << std::endl;
+}
+
+std::istream & operator>>(std::istream & is, Transform2D & tf)
+{   
+    std::string trash_1, trash_2, trash_3;
+    double rotation {};
+    Vector2D translation {};
+    char next = is.peek(); //look at next character
+
+    if(next == 'd')
+    {
+        is >> trash_1; //remove deg:
+        is >> rotation; //assign deg value to rotation         
+        is >> trash_2; //remove x:
+        is >> translation.x; //assign x value to translation.x
+        is >> trash_3; //remove y:
+        is >> translation.y; //assign y value to translation.y
+    }
+    else
+    {
+        is >> rotation >> translation.x >> translation.y;
+    }
+    tf = Transform2D(translation, rotation);
+    return is;
+}
+
+Transform2D operator*(Transform2D lhs, const Transform2D & rhs)
+{
+    return lhs *= rhs;
+}
 
 }
