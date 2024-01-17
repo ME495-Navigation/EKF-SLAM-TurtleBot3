@@ -81,7 +81,7 @@ TEST_CASE( "transform multiplication", "[transform]" ) //Abhishek, Sankar
     resulting_transform = transform_1*transform_2;
 
     REQUIRE_THAT(resulting_transform.rotation(), Catch::Matchers::WithinRel(PI/2.0));
-    REQUIRE_THAT(resulting_transform.translation().x, Catch::Matchers::WithinRel(3.0)); //check
+    REQUIRE_THAT(resulting_transform.translation().x, Catch::Matchers::WithinRel(3.0));
     REQUIRE_THAT(resulting_transform.translation().y, Catch::Matchers::WithinRel(3.0));
 }
 

@@ -70,9 +70,9 @@ Transform2D Transform2D::inv() const
 
 Transform2D & Transform2D::operator*=(const Transform2D & rhs)
 {
-    rot2d = rot2d + rhs.rot2d;
     trans2d.x = rhs.trans2d.x*cos(rot2d)-rhs.trans2d.y*sin(rot2d) + trans2d.x;
     trans2d.y = rhs.trans2d.x*sin(rot2d)+rhs.trans2d.y*cos(rot2d) + trans2d.y;
+    rot2d = rot2d + rhs.rot2d;
     return *this;
 }
 
