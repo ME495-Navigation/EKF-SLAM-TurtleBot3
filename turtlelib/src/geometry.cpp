@@ -72,6 +72,19 @@ Vector2D operator-(const Point2D & head, const Point2D & tail)
     return vec;
 }
 
+double magnitude(const Vector2D & v)
+{
+    return std::sqrt(std::pow(v.x,2) + std::pow(v.y,2));
+}
+
+Vector2D normalize(const Vector2D & v)
+{
+    double mag;
+    mag =magnitude(v);
+
+    return {v.x/mag, v.y/mag};
+}
+
 Point2D operator+(const Point2D & tail, const Vector2D & disp)
 {
     Point2D p;
