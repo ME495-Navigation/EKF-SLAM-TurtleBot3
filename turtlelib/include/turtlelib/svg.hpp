@@ -15,12 +15,16 @@ namespace turtlelib
     private:
         /// \brief output file
         std::ofstream outputFile;
+
     public:
-        /// \brief create an SVG object
+        /// \brief create an SVG object with a specific output filepath
         Svg(const std::string& filepath);
 
-        /// \brief destructor to close the file
-        ~Svg();
+        // /// \brief destructor to close the file
+        // ~Svg();
+
+        /// \brief draw a point
+
     };
 }
 

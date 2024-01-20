@@ -1,12 +1,14 @@
 #include<iostream>
 #include <turtlelib/se2d.hpp>
 #include <turtlelib/geometry2d.hpp>
+#include <turtlelib/svg.hpp>
 
 
 using turtlelib::Transform2D;
 using turtlelib::Vector2D;
 using turtlelib::Point2D;
 using turtlelib::Twist2D;
+using turtlelib::Svg;
 
 
 int main() {
@@ -15,6 +17,7 @@ int main() {
     Point2D p_a;
     Vector2D v_b;
     Twist2D V_b;
+    Svg svg("/tmp/frames.svg");
 
     std::cout << "Enter transform T_{a,b}:" << std::endl;
     std::cin >> t_ab;
@@ -46,4 +49,6 @@ int main() {
     std::cout << "V_a: " << t_ab(V_b) << std::endl;
     std::cout << "V_b: " << V_b << std::endl;
     std::cout << "V_c: " << (t_bc.inv())(V_b) << std::endl;
+
+    return 0;
 }
