@@ -17,7 +17,7 @@ int main() {
     Point2D p_a;
     Vector2D v_b;
     Twist2D V_b;
-    Svg svg("/tmp/frames.svg");
+    Svg svg("frames.svg");
 
     std::cout << "Enter transform T_{a,b}:" << std::endl;
     std::cin >> t_ab;
