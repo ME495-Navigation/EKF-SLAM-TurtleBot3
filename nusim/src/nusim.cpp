@@ -36,7 +36,7 @@ class NuSim : public rclcpp::Node
         
         declare_parameter("theta0", 0.0);
         theta_tele = get_parameter("theta0").as_double(); 
-        reset_theta = get_parameter("y0").as_double();
+        reset_theta = get_parameter("theta0").as_double();
         
         timestep_publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
 
@@ -57,6 +57,25 @@ class NuSim : public rclcpp::Node
   private:
     void timer_callback()
     {   
+        //publish the current timestep
+        auto message = std_msgs::msg::UInt64();
+        message.data = timer_count_;
+        timestep_publisher_->publish(message);
+        timer_count_++;
+        transform_publisher();
+    }
+
+    void reset_callback(std_srvs::srv::Empty::Request::SharedPtr, 
+    std_srvs::srv::Empty::Response::SharedPtr)
+    {
+        timer_count_ = 0;
+        x_tele = reset_x;
+        y_tele = reset_y;
+        theta_tele = reset_theta;
+    }
+
+    void transform_publisher()
+    {
         geometry_msgs::msg::TransformStamped t;
 
         t.header.stamp = this->get_clock()->now();
@@ -74,21 +93,6 @@ class NuSim : public rclcpp::Node
 
         // Send the transformation
         tf_broadcaster_->sendTransform(t);
-
-        //publish the current timestep
-        auto message = std_msgs::msg::UInt64();
-        message.data = timer_count_;
-        timestep_publisher_->publish(message);
-        timer_count_++;
-    }
-
-    void reset_callback(std_srvs::srv::Empty::Request::SharedPtr, 
-    std_srvs::srv::Empty::Response::SharedPtr)
-    {
-        timer_count_ = 0;
-        x_tele = reset_x;
-        y_tele = reset_y;
-        theta_tele = reset_theta;
     }
 
     void teleport_callback(nusim::srv::Teleport::Request::SharedPtr request, 
