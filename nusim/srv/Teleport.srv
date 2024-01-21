@@ -1,5 +1,5 @@
-float64 x
-float64 y
-float64 theta
+float64 x0
+float64 y0
+float64 theta0
 ---
 bool success

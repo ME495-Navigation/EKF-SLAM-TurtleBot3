@@ -26,15 +26,18 @@ class NuSim : public rclcpp::Node
         double timer_rate = get_parameter("rate").as_double();
         std::chrono::milliseconds rate = std::chrono::milliseconds(int(1000.0/timer_rate));
 
-        declare_parameter("x", 0.0);
-        x_tele = get_parameter("x").as_double();
+        declare_parameter("x0", 0.0);
+        x_tele = get_parameter("x0").as_double();
+        reset_x = get_parameter("x0").as_double();
 
-        declare_parameter("y", 0.0);
-        y_tele = get_parameter("y").as_double();
-
-        declare_parameter("theta", 0.0);
-        theta_tele = get_parameter("theta").as_double();
-
+        declare_parameter("y0", 0.0);
+        y_tele = get_parameter("y0").as_double();
+        reset_y = get_parameter("y0").as_double();
+        
+        declare_parameter("theta0", 0.0);
+        theta_tele = get_parameter("theta0").as_double(); 
+        reset_theta = get_parameter("y0").as_double();
+        
         timestep_publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
 
         reset_ = create_service<std_srvs::srv::Empty>(
@@ -83,14 +86,17 @@ class NuSim : public rclcpp::Node
     std_srvs::srv::Empty::Response::SharedPtr)
     {
         timer_count_ = 0;
+        x_tele = reset_x;
+        y_tele = reset_y;
+        theta_tele = reset_theta;
     }
 
     void teleport_callback(nusim::srv::Teleport::Request::SharedPtr request, 
     nusim::srv::Teleport::Response::SharedPtr response)
     {
-    x_tele = request->x;
-    y_tele = request->y;
-    theta_tele = request->theta;
+    x_tele = request->x0;
+    y_tele = request->y0;
+    theta_tele = request->theta0;
     RCLCPP_INFO_STREAM(get_logger(), "Teleporting to x:" << x_tele << " y:" << y_tele << " theta:" << theta_tele);
     response->success = true;
     }
@@ -100,7 +106,7 @@ class NuSim : public rclcpp::Node
     rclcpp::Service<nusim::srv::Teleport>::SharedPtr teleport_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::TimerBase::SharedPtr timer_;
-    double x_tele,y_tele,theta_tele;
+    double x_tele,y_tele,theta_tele,reset_x,reset_y,reset_theta;
     size_t timer_count_;
 };
 
