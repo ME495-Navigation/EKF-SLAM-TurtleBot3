@@ -15,17 +15,11 @@ namespace turtlelib
     /// \brief represent a point (svg)
     struct SvgPoint
     {
-        /// \brief the x position
-        double cx = 0.0;
-
-        /// \brief the y position
-        double cy = 0.0;
+        /// \brief the x and y positions
+        Point2D point {0.0,0.0};
 
         /// \brief the radius
         double r = 3.0;
-
-        /// \brief the stroke color
-        std::string stroke = "purple";
 
         /// \brief the fill colour
         std::string fill = "purple";

@@ -10,7 +10,6 @@ namespace turtlelib
 {
 Svg::Svg(const std::string & filepath)
 {
-    std::cout << "opening file" << std::endl;
     outputFile.open(filepath);
     outputFile << "<svg width=\"8.500000in\" height=\"11.000000in\" " 
     << "viewBox=\"0 0 816.000000 1056.000000\" xmlns=\"http://www.w3.org/2000/svg\">" << std::endl;
@@ -44,10 +43,10 @@ Svg::~Svg()
 
 void Svg::draw_point(SvgPoint svg_point)
 {
-    double new_cx = (svg_point.cx * 96) + 408;
-    double new_cy = (svg_point.cy * -96) + 528;
+    double new_cx = (svg_point.point.x * 96) + 408;
+    double new_cy = (svg_point.point.y * -96) + 528;
     outputFile << "<circle cx=\"" << new_cx <<"\" cy=\"" << new_cy << 
-    "\" r=\"" << svg_point.r << "\" stroke=\"" << svg_point.stroke << 
+    "\" r=\"" << svg_point.r << "\" stroke=\"" << svg_point.fill << 
     "\" fill=\"" << svg_point.fill << "\" stroke-width=\"" << svg_point.stroke_width << "\" />" << std::endl;
 }
 
@@ -68,15 +67,6 @@ void Svg::draw_text(double x, double y, std::string text)
     double new_y = (y * -96) + 528;
     outputFile << "<text x=\"" << new_x << "\" y=\"" << new_y << "\">" << text << "</text>" << std::endl;
 }
-
-// void Svg::draw_frame(SvgLine line_1, SvgLine line_2, std::string name = "")
-// {
-//     outputFile << "<g>" << std::endl;
-//     draw_line(line_1);
-//     draw_line(line_2);
-//     draw_text(line_1.x2 + 0.1, line_1.y2 + 0.1, name);
-//     outputFile << "</g>" << std::endl;
-// }
 
 void Svg::draw_frame(Transform2D frame, std::string name = "")
 {   
