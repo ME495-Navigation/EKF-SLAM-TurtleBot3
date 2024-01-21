@@ -107,7 +107,6 @@ if(BUILD_TESTING)
     target_link_libraries(geometry_test turtlelib Catch2::Catch2WithMain)
     target_link_libraries(se2_test turtlelib Catch2::Catch2WithMain)
 
-
     # register the test with CTest, telling it what executable to run
     add_test(NAME geometry_test COMMAND geometry_test)
     add_test(NAME se2_test COMMAND se2_test)
