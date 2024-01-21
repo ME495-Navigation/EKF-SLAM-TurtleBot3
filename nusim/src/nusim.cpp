@@ -7,6 +7,8 @@
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int64.hpp"
 
+#include "tf2_ros/transform_broadcaster.h"
+
 #include "std_srvs/srv/empty.hpp"
 
 using namespace std::chrono_literals;
@@ -28,6 +30,10 @@ class NuSim : public rclcpp::Node
       reset_ = create_service<std_srvs::srv::Empty>(
       "~/reset", std::bind(&NuSim::reset_callback, this, std::placeholders::_1, std::placeholders::_2));
 
+      // Initialize the transform broadcaster
+      tf_broadcaster_ =
+      std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+
       timer_ = create_wall_timer(
       rate, std::bind(&NuSim::timer_callback, this));
     }
@@ -35,6 +41,24 @@ class NuSim : public rclcpp::Node
   private:
     void timer_callback()
     {   
+        geometry_msgs::msg::TransformStamped t;
+
+        t.header.stamp = this->get_clock()->now();
+        t.header.frame_id = "nusim/world";
+        t.child_frame_id = "red/base_footprint";
+
+        t.transform.translation.x = 0.0;
+        t.transform.translation.y = 0.0;
+        t.transform.translation.z = 0.0;
+
+        t.transform.rotation.x = 0.0;
+        t.transform.rotation.y = 0.0;
+        t.transform.rotation.z = 0.0;
+        t.transform.rotation.w = 1.0;
+
+        // Send the transformation
+        tf_broadcaster_->sendTransform(t);
+
         //publish the current timestep
         auto message = std_msgs::msg::UInt64();
         message.data = timer_count_;
@@ -50,6 +74,7 @@ class NuSim : public rclcpp::Node
     
     rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr timestep_publisher_;
     rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_;
+    std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::TimerBase::SharedPtr timer_;
     size_t timer_count_;
 };
