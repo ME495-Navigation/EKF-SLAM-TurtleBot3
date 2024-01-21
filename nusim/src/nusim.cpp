@@ -6,6 +6,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int64.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
 
 #include "tf2_ros/transform_broadcaster.h"
 
@@ -38,7 +39,14 @@ class NuSim : public rclcpp::Node
         theta_tele = get_parameter("theta0").as_double(); 
         reset_theta = get_parameter("theta0").as_double();
         
+        declare_parameter("arena_x_length", 10.0);
+        arena_x = get_parameter("arena_x_length").as_double(); 
+
+        declare_parameter("arena_y_length", 15.0);
+        arena_y = get_parameter("arena_y_length").as_double(); 
+
         timestep_publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
+        arena_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/walls", 10);
 
         reset_ = create_service<std_srvs::srv::Empty>(
         "~/reset", std::bind(&NuSim::reset_callback, this, std::placeholders::_1, std::placeholders::_2));
@@ -63,6 +71,7 @@ class NuSim : public rclcpp::Node
         timestep_publisher_->publish(message);
         timer_count_++;
         transform_publisher();
+        walls_publisher();
     }
 
     void reset_callback(std_srvs::srv::Empty::Request::SharedPtr, 
@@ -104,13 +113,69 @@ class NuSim : public rclcpp::Node
     RCLCPP_INFO_STREAM(get_logger(), "Teleporting to x:" << x_tele << " y:" << y_tele << " theta:" << theta_tele);
     response->success = true;
     }
+
+    void walls_publisher()
+    {
+        visualization_msgs::msg::MarkerArray array;
+        for (int i=0; i<4; i++)
+        {
+            visualization_msgs::msg::Marker wall;
+            wall.header.frame_id = "nusim/world";
+            wall.header.stamp = get_clock()->now();
+            wall.id = i;
+            wall.type = visualization_msgs::msg::Marker::CUBE;
+            wall.action = visualization_msgs::msg::Marker::ADD;
+            if (i==0 or i==2)
+            {   
+                if (i==0)
+                {
+                wall.pose.position.x = arena_x / 2 + wall_thickness / 2;
+                }
+                else
+                {
+                wall.pose.position.x = -(arena_x / 2 + wall_thickness / 2);
+                }
+                wall.pose.position.y = 0.0;
+                wall.scale.x = wall_thickness;
+                wall.scale.y = arena_y;
+                wall.scale.z = 0.25;
+            }
+            else
+            {
+                wall.pose.position.x = 0.0;
+                if (i==1)
+                {
+                wall.pose.position.y = -(arena_y / 2 + wall_thickness / 2);   
+                }
+                else
+                {
+                wall.pose.position.y = arena_y / 2 + wall_thickness / 2;
+                }
+                wall.scale.x = arena_x + 2*wall_thickness;
+                wall.scale.y = wall_thickness;
+                wall.scale.z = 0.25;
+            }
+            wall.pose.orientation.x = 0.0;
+            wall.pose.orientation.y = 0.0;
+            wall.pose.orientation.z = 0.0;
+            wall.pose.orientation.w = 1.0;
+            wall.color.r = 1.0;
+            wall.color.g = 0.0;
+            wall.color.b = 0.0;
+            wall.color.a = 1.0;
+            array.markers.push_back(wall);
+        }
+        arena_publisher_->publish(array);
+    }
     
     rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr timestep_publisher_;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr arena_publisher_;
     rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_;
     rclcpp::Service<nusim::srv::Teleport>::SharedPtr teleport_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::TimerBase::SharedPtr timer_;
     double x_tele,y_tele,theta_tele,reset_x,reset_y,reset_theta;
+    double arena_x,arena_y,wall_thickness = 0.5;
     size_t timer_count_;
 };
 
