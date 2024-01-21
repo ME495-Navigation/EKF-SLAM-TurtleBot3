@@ -2,6 +2,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -43,10 +44,20 @@ class NuSim : public rclcpp::Node
         arena_x = get_parameter("arena_x_length").as_double(); 
 
         declare_parameter("arena_y_length", 15.0);
-        arena_y = get_parameter("arena_y_length").as_double(); 
+        arena_y = get_parameter("arena_y_length").as_double();
+
+        declare_parameter("obstaclesx", obstacles_x);
+        obstacles_x = get_parameter("obstaclesx").as_double_array(); 
+
+        declare_parameter("obstaclesy", obstacles_y);
+        obstacles_y = get_parameter("obstaclesy").as_double_array();
+
+        declare_parameter("obstaclesr", 0.1);
+        obstacles_r = get_parameter("obstaclesr").as_double(); 
 
         timestep_publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
         arena_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/walls", 10);
+        obstacle_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", 10);
 
         reset_ = create_service<std_srvs::srv::Empty>(
         "~/reset", std::bind(&NuSim::reset_callback, this, std::placeholders::_1, std::placeholders::_2));
@@ -63,6 +74,19 @@ class NuSim : public rclcpp::Node
     }
 
   private:
+    rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr timestep_publisher_;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr arena_publisher_;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacle_publisher_;
+    rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_;
+    rclcpp::Service<nusim::srv::Teleport>::SharedPtr teleport_;
+    std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+    rclcpp::TimerBase::SharedPtr timer_;
+    double x_tele,y_tele,theta_tele,reset_x,reset_y,reset_theta;
+    double arena_x,arena_y,wall_thickness = 0.5;
+    std::vector<double> obstacles_x {}, obstacles_y {};
+    double obstacles_r;
+    size_t timer_count_;
+
     void timer_callback()
     {   
         //publish the current timestep
@@ -72,6 +96,7 @@ class NuSim : public rclcpp::Node
         timer_count_++;
         transform_publisher();
         walls_publisher();
+        obstacles_publisher();
     }
 
     void reset_callback(std_srvs::srv::Empty::Request::SharedPtr, 
@@ -167,16 +192,41 @@ class NuSim : public rclcpp::Node
         }
         arena_publisher_->publish(array);
     }
+
+    void obstacles_publisher()
+    {   
+        if(obstacles_x.size() != obstacles_y.size())
+        {
+            throw std::runtime_error("x and y coordinate lists are not the same size.");
+        }
+        visualization_msgs::msg::MarkerArray ob_array;
+        for (long unsigned int i=0; i<obstacles_x.size(); i++)
+        {
+            visualization_msgs::msg::Marker ob;
+            ob.header.frame_id = "nusim/world";
+            ob.header.stamp = get_clock()->now();
+            ob.id = i;
+            ob.type = visualization_msgs::msg::Marker::CYLINDER;
+            ob.action = visualization_msgs::msg::Marker::ADD;
+            ob.pose.position.x = obstacles_x.at(i);
+            ob.pose.position.y = obstacles_y.at(i);
+            ob.pose.position.z = 0.25 / 2.0;
+            ob.pose.orientation.x = 0.0;
+            ob.pose.orientation.y = 0.0;
+            ob.pose.orientation.z = 0.0;
+            ob.pose.orientation.w = 1.0;
+            ob.scale.x = obstacles_r * 2.0;
+            ob.scale.y = obstacles_r * 2.0;
+            ob.scale.z = 0.25;
+            ob.color.r = 1.0;
+            ob.color.g = 0.0;
+            ob.color.b = 0.0;
+            ob.color.a = 1.0;
+            ob_array.markers.push_back(ob);
+        }
+        obstacle_publisher_->publish(ob_array);
+    }
     
-    rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr timestep_publisher_;
-    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr arena_publisher_;
-    rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_;
-    rclcpp::Service<nusim::srv::Teleport>::SharedPtr teleport_;
-    std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
-    rclcpp::TimerBase::SharedPtr timer_;
-    double x_tele,y_tele,theta_tele,reset_x,reset_y,reset_theta;
-    double arena_x,arena_y,wall_thickness = 0.5;
-    size_t timer_count_;
 };
 
 int main(int argc, char * argv[])
