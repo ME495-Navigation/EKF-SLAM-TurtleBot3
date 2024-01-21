@@ -15,9 +15,15 @@ class NuSim : public rclcpp::Node
     NuSim()
     : Node("nusim"), timer_count_(0)
     {
+      auto timer_param_desc = rcl_interfaces::msg::ParameterDescriptor{};
+      timer_param_desc.description = "Timer frequency";
+      declare_parameter("rate", 200.0, timer_param_desc);
+      double timer_rate = get_parameter("rate").as_double();
+      std::chrono::milliseconds rate = (std::chrono::milliseconds) ((int)(1000.0 / timer_rate));
+
       timestep_publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
       timer_ = create_wall_timer(
-      500ms, std::bind(&NuSim::timer_callback, this));
+      rate, std::bind(&NuSim::timer_callback, this));
     }
 
   private:
