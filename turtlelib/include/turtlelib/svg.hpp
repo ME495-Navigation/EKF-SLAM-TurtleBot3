@@ -6,6 +6,8 @@
 #include <fstream>
 #include <string>
 #include <iostream>
+#include <turtlelib/se2d.hpp>
+#include <turtlelib/geometry2d.hpp>
 
 namespace turtlelib
 {
@@ -20,7 +22,7 @@ namespace turtlelib
         double cy = 0.0;
 
         /// \brief the radius
-        double r = 1.0;
+        double r = 3.0;
 
         /// \brief the stroke color
         std::string stroke = "purple";
@@ -85,7 +87,7 @@ namespace turtlelib
         void draw_text(double x, double y, std::string text);
 
         /// \brief draw a coordinate frame
-        void draw_frame(SvgLine line_1, SvgLine line_2, std::string name);
+        void draw_frame(Transform2D frame, std::string name);
     };
 }
 
