@@ -46,14 +46,14 @@ class NuSim : public rclcpp::Node
         declare_parameter("arena_y_length", 15.0);
         arena_y = get_parameter("arena_y_length").as_double();
 
-        declare_parameter("obstaclesx", obstacles_x);
-        obstacles_x = get_parameter("obstaclesx").as_double_array(); 
+        declare_parameter("obstacles.x", obstacles_x);
+        obstacles_x = get_parameter("obstacles.x").as_double_array(); 
 
-        declare_parameter("obstaclesy", obstacles_y);
-        obstacles_y = get_parameter("obstaclesy").as_double_array();
+        declare_parameter("obstacles.y", obstacles_y);
+        obstacles_y = get_parameter("obstacles.y").as_double_array();
 
-        declare_parameter("obstaclesr", 0.1);
-        obstacles_r = get_parameter("obstaclesr").as_double(); 
+        declare_parameter("obstacles.r", 0.1);
+        obstacles_r = get_parameter("obstacles.r").as_double(); 
 
         timestep_publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
         arena_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/walls", 10);
