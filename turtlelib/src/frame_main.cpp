@@ -47,9 +47,9 @@ int main() {
     std::cout << "p_c: " << ((t_ab*t_bc).inv())(p_a) << std::endl;
 
     p_1.point = p_a;
-    p_2.point = (t_ab.inv())(p_a);
+    p_2.point = (t_ab)((t_ab.inv())(p_a));
     p_2.fill = "brown";
-    p_3.point = ((t_ab*t_bc).inv())(p_a);
+    p_3.point = (t_ab*t_bc)(((t_ab*t_bc).inv())(p_a));
     p_3.fill = "orange";
     svg.draw_point(p_1);
     svg.draw_point(p_2);
