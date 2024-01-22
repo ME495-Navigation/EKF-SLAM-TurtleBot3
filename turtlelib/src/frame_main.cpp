@@ -78,8 +78,8 @@ int main() {
 
     l_c.x2 = (t_ab*t_bc).translation().x;
     l_c.y2 = (t_ab*t_bc).translation().y;
-    l_c.x1 = (t_bc.inv())(v_b).x + (t_ab*t_bc).translation().x; 
-    l_c.y1 = (t_bc.inv())(v_b).y + (t_ab*t_bc).translation().y;
+    l_c.x1 = (t_ab(v_b)).x + (t_ab*t_bc).translation().x; 
+    l_c.y1 = (t_ab(v_b)).y + (t_ab*t_bc).translation().y;
     l_c.stroke = "orange";
     svg.draw_line(l_c);
 
