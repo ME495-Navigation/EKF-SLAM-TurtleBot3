@@ -55,9 +55,13 @@ class NuSim : public rclcpp::Node
         declare_parameter("obstacles.r", 0.1);
         obstacles_r = get_parameter("obstacles.r").as_double(); 
 
+        // Set QoS settings for the Marker topic
+        rclcpp::QoS qos(rclcpp::KeepLast(10));
+        qos.transient_local();
+
         timestep_publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
-        arena_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/walls", 10);
-        obstacle_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", 10);
+        arena_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/walls", qos);
+        obstacle_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", qos);
 
         reset_ = create_service<std_srvs::srv::Empty>(
         "~/reset", std::bind(&NuSim::reset_callback, this, std::placeholders::_1, std::placeholders::_2));
