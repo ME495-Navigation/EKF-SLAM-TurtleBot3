@@ -12,7 +12,7 @@ using turtlelib::SvgPoint;
 using turtlelib::SvgLine;
 
 int main() {
-
+ 
     Transform2D t_ab, t_bc;
     Point2D p_a;
     Vector2D v_b;
@@ -21,11 +21,13 @@ int main() {
     SvgPoint p_1,p_2,p_3;
     SvgLine l_a,l_b,l_c;
 
+    // user input
     std::cout << "Enter transform T_{a,b}:" << std::endl;
     std::cin >> t_ab;
     std::cout << "Enter transform T_{b,c}:" << std::endl;
     std::cin >> t_bc;
 
+    // print transforms
     std::cout << "T_{a,b}: " << t_ab << std::endl;
     std::cout << "T_{b,a}: " << t_ab.inv() << std::endl;
     std::cout << "T_{b,c}: " << t_bc << std::endl;
@@ -36,16 +38,21 @@ int main() {
     Transform2D A,B,C;
     B = (t_ab.inv())*A;
 
+    // draw frames
     svg.draw_frame(A,"{A}");
     svg.draw_frame(t_ab,"{B}");
     svg.draw_frame(t_ab*t_bc,"{C}");
     
+    // user input
     std::cout << "Enter point p_a:" << std::endl;
     std::cin >> p_a;
+
+    // print points
     std::cout << "p_a: " << p_a << std::endl;
     std::cout << "p_b: " << (t_ab.inv())(p_a) << std::endl;
     std::cout << "p_c: " << ((t_ab*t_bc).inv())(p_a) << std::endl;
 
+    // draw points
     p_1.point = p_a;
     p_2.point = (t_ab)((t_ab.inv())(p_a));
     p_2.fill = "brown";
@@ -55,13 +62,17 @@ int main() {
     svg.draw_point(p_2);
     svg.draw_point(p_3);
 
+    // user input
     std::cout << "Enter vector v_b:" << std::endl;
     std::cin >> v_b;
+    
+    // print vectors
     std::cout << "v_bhat: " << normalize(v_b) << std::endl;
     std::cout << "v_a: " << t_ab(v_b) << std::endl;
     std::cout << "v_b: " << v_b << std::endl;
     std::cout << "v_c: " << (t_bc.inv())(v_b) << std::endl;
 
+    // draw lines
     l_b.x2 = t_ab.translation().x;
     l_b.y2 = t_ab.translation().y;
     l_b.x1 = t_ab(normalize(v_b)).x + l_b.x2;
@@ -83,8 +94,10 @@ int main() {
     l_c.stroke = "orange";
     svg.draw_line(l_c);
 
+    // user input
     std::cout << "Enter twist V_b: " << std::endl;
     std::cin >> V_b;
+    // print twists
     std::cout << "V_a: " << t_ab(V_b) << std::endl;
     std::cout << "V_b: " << V_b << std::endl;
     std::cout << "V_c: " << (t_bc.inv())(V_b) << std::endl;

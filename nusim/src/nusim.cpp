@@ -1,3 +1,26 @@
+/// \file
+/// \brief Simulator for the turtlebot in an rvix scene.
+///
+/// PARAMETERS:
+///     rate (double):The frequency of simulation frame update in Hz
+///     x0 (double): The initial x position of the turtlebot.
+///     y0 (double): The initial y position of the turtlebot.
+///     theta0 (double): The initial orientation of the turtlebot.
+///     arena_x_length (double): The length of the arena.
+///     arena_y_length (double): The width of the arena.
+///     obstacles_x (std::vector<double>): The x coordinates of the obstacles in the scene in the form of a list.
+///     obstacles_y (std::vector<double>): The y coordinates of the obstacles in the scene in the form of a list.
+///     obstacles_r (double): The radius of the cylindrical obstacles.
+///
+/// PUBLISHERS:
+///     ~/time_step (std_msgs/msg/UInt64): Publishes the current timestep.
+///     ~/obstacles (visualization_msgs/msg/MarkerArray): Publishes the obstacles as markers to rviz.
+///     ~/walls (visualization_msgs/msg/MarkerArray):  Publishes the walls of the arena as markers to rviz.
+///
+/// SERVICES:
+///     ~/reset (std_srvs/srv/Empty): Resets the state of the simulation to the starting state.
+///     ~/teleport (nusim/srv/Teleport): Teleports the turtlebot to the requested pose.
+
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -16,12 +39,14 @@
 
 using namespace std::chrono_literals;
 
+/// \brief Turtlebot simulator.
 class NuSim : public rclcpp::Node
 {
   public:
     NuSim()
     : Node("nusim"), timer_count_(0)
     {
+        // Declare parameters
         auto timer_param_desc = rcl_interfaces::msg::ParameterDescriptor{};
         timer_param_desc.description = "Timer frequency";
         declare_parameter("rate", 200.0, timer_param_desc);
@@ -59,10 +84,12 @@ class NuSim : public rclcpp::Node
         rclcpp::QoS qos(rclcpp::KeepLast(10));
         qos.transient_local();
 
+        // Create publishers
         timestep_publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
         arena_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/walls", qos);
         obstacle_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", qos);
 
+        // Create services
         reset_ = create_service<std_srvs::srv::Empty>(
         "~/reset", std::bind(&NuSim::reset_callback, this, std::placeholders::_1, std::placeholders::_2));
 
@@ -73,6 +100,7 @@ class NuSim : public rclcpp::Node
         tf_broadcaster_ =
         std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
+        // Create timer
         timer_ = create_wall_timer(
         rate, std::bind(&NuSim::timer_callback, this));
     }
@@ -91,18 +119,22 @@ class NuSim : public rclcpp::Node
     double obstacles_r;
     size_t timer_count_;
 
+    /// \brief The timer callback
     void timer_callback()
     {   
-        //publish the current timestep
+        // publish the current timestep
         auto message = std_msgs::msg::UInt64();
         message.data = timer_count_;
         timestep_publisher_->publish(message);
         timer_count_++;
         transform_publisher();
+        // publish walls and obstacles
         walls_publisher();
         obstacles_publisher();
     }
 
+    /// \brief Callback for the reset service.
+    /// Resets the simulation to the starting state.
     void reset_callback(std_srvs::srv::Empty::Request::SharedPtr, 
     std_srvs::srv::Empty::Response::SharedPtr)
     {
@@ -112,6 +144,8 @@ class NuSim : public rclcpp::Node
         theta_tele = reset_theta;
     }
 
+    /// \brief Broadcasts the transform betweem world and
+    /// the turtlebot base footprint.
     void transform_publisher()
     {
         geometry_msgs::msg::TransformStamped t;
@@ -133,6 +167,10 @@ class NuSim : public rclcpp::Node
         tf_broadcaster_->sendTransform(t);
     }
 
+    ///\brief Callback for the teleport service.
+    /// Teleports the turtlebot to the requested pose.
+    /// \param request - the requested pose
+    /// \param response - the boolean success value
     void teleport_callback(nusim::srv::Teleport::Request::SharedPtr request, 
     nusim::srv::Teleport::Response::SharedPtr response)
     {
@@ -143,9 +181,13 @@ class NuSim : public rclcpp::Node
     response->success = true;
     }
 
+
+    /// \brief Arena walls publisher.
     void walls_publisher()
     {
         visualization_msgs::msg::MarkerArray array;
+ 
+        // loop through the walls
         for (int i=0; i<4; i++)
         {
             visualization_msgs::msg::Marker wall;
@@ -154,6 +196,8 @@ class NuSim : public rclcpp::Node
             wall.id = i;
             wall.type = visualization_msgs::msg::Marker::CUBE;
             wall.action = visualization_msgs::msg::Marker::ADD;
+
+            // east and west facing walls
             if (i==0 or i==2)
             {   
                 if (i==0)
@@ -169,6 +213,7 @@ class NuSim : public rclcpp::Node
                 wall.scale.y = arena_y;
                 wall.scale.z = 0.25;
             }
+            // north and south facing walls
             else
             {
                 wall.pose.position.x = 0.0;
@@ -197,6 +242,7 @@ class NuSim : public rclcpp::Node
         arena_publisher_->publish(array);
     }
 
+    /// \brief Arena obstacles publisher.
     void obstacles_publisher()
     {   
         if(obstacles_x.size() != obstacles_y.size())
@@ -204,6 +250,8 @@ class NuSim : public rclcpp::Node
             throw std::runtime_error("x and y coordinate lists are not the same size.");
         }
         visualization_msgs::msg::MarkerArray ob_array;
+
+        // loop through all the obstacles in the list
         for (long unsigned int i=0; i<obstacles_x.size(); i++)
         {
             visualization_msgs::msg::Marker ob;
@@ -233,6 +281,9 @@ class NuSim : public rclcpp::Node
     
 };
 
+/// \brief The main fucntion.
+/// \param argc
+/// \param argv
 int main(int argc, char * argv[])
 {
     rclcpp::init(argc, argv);
