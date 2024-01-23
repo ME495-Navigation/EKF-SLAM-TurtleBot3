@@ -5,6 +5,7 @@
 #include <vector>
 #include <cmath>
 #include <fstream>
+#include <sstream>
 
 namespace turtlelib
 {
@@ -97,4 +98,14 @@ void Svg::draw_frame(Transform2D frame, std::string name = "")
     outputFile << "</g>" << std::endl;
 }
 
+std::string SvgOutput(const std::string & filepath) {
+    std::ifstream inputFile(filepath);
+    std::stringstream svg_text;
+    
+    // Read the text from the svg file
+    svg_text << inputFile.rdbuf();
+    std::string svg_text_string = svg_text.str();
+
+    return svg_text_string;
+}
 }

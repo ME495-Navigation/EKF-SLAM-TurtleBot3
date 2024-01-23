@@ -79,7 +79,7 @@ find_package(Doxygen)
 
 # Building documentation should be optional.
 # To build documentation pass -DBUILD_DOCS=ON when generating the build system
-option(BUILD_DOCS "Build the documentation" OFF)
+option(BUILD_DOCS "Build the documentation" ON)
 
 # build just because Doxygen is missing
 if(${DOXYGEN_FOUND} AND ${BUILD_DOCS})
@@ -103,12 +103,14 @@ if(BUILD_TESTING)
     # A test is just an executable that is linked against the unit testing library
     add_executable(geometry2d_test tests/test_geometry2d.cpp)
     add_executable(se2d_test tests/test_se2d.cpp)
+    add_executable(svg_test tests/test_svg.cpp)
 
     target_link_libraries(geometry2d_test turtlelib Catch2::Catch2WithMain)
     target_link_libraries(se2d_test turtlelib Catch2::Catch2WithMain)
+    target_link_libraries(svg_test turtlelib Catch2::Catch2WithMain)
 
     # register the test with CTest, telling it what executable to run
     add_test(NAME geometry2d_test COMMAND geometry2d_test)
     add_test(NAME se2d_test COMMAND se2d_test)
-
+    add_test(NAME svg_test COMMAND svg_test)
 endif()

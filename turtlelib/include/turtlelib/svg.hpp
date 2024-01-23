@@ -53,6 +53,8 @@ namespace turtlelib
         std::string marker_start= "url(#Arrow1Sstart)";
     };
 
+    /// \brief read the contents of an svg file
+    std::string SvgOutput(const std::string & filepath);
 
     /// \brief svg visualisation class.
     class Svg
