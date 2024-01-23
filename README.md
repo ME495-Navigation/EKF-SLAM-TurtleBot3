@@ -3,4 +3,6 @@
 * Winter 2022
 # Package List
 This repository consists of several ROS packages
-- <PACKAGE1> - <one sentence description>
+- nusim - Turtlebot simulator for the NU slam project.
+- nuturtle_description - 3D models of the TurtleBot3 for simulation and visualization.
+- turtlelib - A library for handling transformations in SE(2) and other turtlebot-related math.
