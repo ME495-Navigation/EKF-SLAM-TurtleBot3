@@ -35,6 +35,3 @@ build/
 install/
 log/
 *.vscode
-
-svg_lib_example.svg
-frames.svg
