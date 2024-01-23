@@ -38,6 +38,42 @@ TEST_CASE( "input stream twist", "[twist]" ) //Abhishek, Sankar
     REQUIRE( twist_2.y == 86.0 );
 }
 
+TEST_CASE( "transform constructor()", "[transform]" ) //Abhishek, Sankar
+{
+    Transform2D transform;
+
+    REQUIRE_THAT(transform.rotation(), Catch::Matchers::WithinRel(0.0));
+    REQUIRE_THAT(transform.translation().x, Catch::Matchers::WithinRel(0.0));
+    REQUIRE_THAT(transform.translation().y, Catch::Matchers::WithinRel(0.0));
+}
+
+TEST_CASE( "transform constructor(Vector2D)", "[transform]" ) //Abhishek, Sankar
+{
+    Transform2D transform(Vector2D {2.3,3.1});
+
+    REQUIRE_THAT(transform.rotation(), Catch::Matchers::WithinRel(0.0));
+    REQUIRE_THAT(transform.translation().x, Catch::Matchers::WithinRel(2.3));
+    REQUIRE_THAT(transform.translation().y, Catch::Matchers::WithinRel(3.1));
+}
+
+TEST_CASE( "transform constructor(double)", "[transform]" ) //Abhishek, Sankar
+{
+    Transform2D transform(PI);
+
+    REQUIRE_THAT(transform.rotation(), Catch::Matchers::WithinRel(PI));
+    REQUIRE_THAT(transform.translation().x, Catch::Matchers::WithinRel(0.0));
+    REQUIRE_THAT(transform.translation().y, Catch::Matchers::WithinRel(0.0));
+}
+
+TEST_CASE( "transform constructor(Vector2D, double)", "[transform]" ) //Abhishek, Sankar
+{
+    Transform2D transform(Vector2D{2.3,3.1}, PI);
+
+    REQUIRE_THAT(transform.rotation(), Catch::Matchers::WithinRel(PI));
+    REQUIRE_THAT(transform.translation().x, Catch::Matchers::WithinRel(2.3));
+    REQUIRE_THAT(transform.translation().y, Catch::Matchers::WithinRel(3.1));
+}
+
 TEST_CASE( "output stream transform", "[transform]" ) //Abhishek, Sankar
 {
     Transform2D transform(Vector2D{2.3,3.1}, PI);
@@ -162,5 +198,4 @@ TEST_CASE("operator()(Twist2D t)","[transform]") // Srikanth,Schelbert
     REQUIRE_THAT(T_a.x, Catch::Matchers::WithinAbs(0.0, 1e-5));
     REQUIRE_THAT(T_a.y, Catch::Matchers::WithinAbs(1.0, 1e-5));
 }
-
 }
