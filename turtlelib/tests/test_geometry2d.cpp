@@ -81,6 +81,17 @@ TEST_CASE( "vector formation", "[vector]" ) {
     REQUIRE( vec.y == 3.0 );
 }
 
+TEST_CASE( "vector normalize", "[vector]" ) {
+    Vector2D vec,vec_n;
+
+    vec.x = 1.0;
+    vec.y = 1.0;
+    vec_n = normalize(vec);
+
+    REQUIRE_THAT(vec_n.x, Catch::Matchers::WithinAbs(0.7071, 0.01));
+    REQUIRE_THAT(vec_n.y, Catch::Matchers::WithinAbs(0.7071, 0.01));
+}
+
 TEST_CASE( "point displacement", "[point]" ) {
     Point2D p, tail;
     Vector2D vec;
