@@ -30,12 +30,12 @@ TEST_CASE( "input stream twist", "[twist]" ) //Abhishek, Sankar
     is_2 << "[2.5 2.14 86.0]";
     is_2 >> twist_2;
 
-    REQUIRE( twist_1.omega == 3.2 );
-    REQUIRE( twist_1.x == 8.3 );
-    REQUIRE( twist_1.y == 5.65 );
-    REQUIRE( twist_2.omega == 2.5 );
-    REQUIRE( twist_2.x == 2.14 );
-    REQUIRE( twist_2.y == 86.0 );
+    REQUIRE_THAT(twist_1.omega, Catch::Matchers::WithinRel(3.2));
+    REQUIRE_THAT(twist_1.x, Catch::Matchers::WithinRel(8.3));
+    REQUIRE_THAT(twist_1.y , Catch::Matchers::WithinRel(5.65));
+    REQUIRE_THAT(twist_2.omega, Catch::Matchers::WithinRel(2.5));
+    REQUIRE_THAT(twist_2.x, Catch::Matchers::WithinRel(2.14));
+    REQUIRE_THAT(twist_2.y, Catch::Matchers::WithinRel(86.0));
 }
 
 TEST_CASE( "transform constructor()", "[transform]" ) //Abhishek, Sankar

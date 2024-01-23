@@ -8,12 +8,13 @@
 
 namespace turtlelib{
 TEST_CASE( "angle is normalized", "[normalize]" ) {
-    REQUIRE( normalize_angle(PI) == PI );
-    REQUIRE( normalize_angle(-PI) == -PI );
-    REQUIRE( normalize_angle(0.0) == 0.0 );
-    REQUIRE( normalize_angle(-PI/4.0) == -PI/4.0 );
-    REQUIRE( normalize_angle(3*PI/2.0) == -PI/2.0 );
-    REQUIRE( normalize_angle(-5*PI/2.0) == -PI/2.0 );
+    
+    REQUIRE_THAT(normalize_angle(PI), Catch::Matchers::WithinRel(PI));
+    REQUIRE_THAT(normalize_angle(-PI), Catch::Matchers::WithinRel(-PI));
+    REQUIRE_THAT(normalize_angle(0.0), Catch::Matchers::WithinRel(0.0));
+    REQUIRE_THAT(normalize_angle(-PI/4.0), Catch::Matchers::WithinRel(-PI/4.0));
+    REQUIRE_THAT(normalize_angle(3*PI/2.0), Catch::Matchers::WithinRel(-PI/2.0));
+    REQUIRE_THAT(normalize_angle(-5*PI/2.0), Catch::Matchers::WithinRel(-PI/2.0));
     REQUIRE_THAT(normalize_angle(-5*PI/2.0), Catch::Matchers::WithinRel(-PI/2.0));
 }
 
@@ -45,10 +46,10 @@ TEST_CASE( "input stream 2d point", "[point]" ) {
     is_2 << "[9.5 1.32]";
     is_2 >> point_2;
 
-    REQUIRE( point_1.x == 0.7 );
-    REQUIRE( point_1.y == 4.3 );
-    REQUIRE( point_2.x == 9.5 );
-    REQUIRE( point_2.y == 1.32 );
+    REQUIRE_THAT(point_1.x, Catch::Matchers::WithinRel(0.7));
+    REQUIRE_THAT(point_1.y, Catch::Matchers::WithinRel(4.3));
+    REQUIRE_THAT(point_2.x, Catch::Matchers::WithinRel(9.5));
+    REQUIRE_THAT(point_2.y, Catch::Matchers::WithinRel(1.32));
 }
 
 TEST_CASE( "input stream vector", "[vector]" ) {
@@ -61,10 +62,10 @@ TEST_CASE( "input stream vector", "[vector]" ) {
     is_2 << "[2.5 0.97]";
     is_2 >> vector_2;
 
-    REQUIRE( vector_1.x == 2.0 );
-    REQUIRE( vector_1.y == 0.93 );
-    REQUIRE( vector_2.x == 2.5 );
-    REQUIRE( vector_2.y == 0.97 );
+    REQUIRE_THAT(vector_1.x, Catch::Matchers::WithinRel(2.0));
+    REQUIRE_THAT(vector_1.y, Catch::Matchers::WithinRel(0.93));
+    REQUIRE_THAT(vector_2.x, Catch::Matchers::WithinRel(2.5));
+    REQUIRE_THAT(vector_2.y, Catch::Matchers::WithinRel(0.97));
 }
 
 TEST_CASE( "vector formation", "[vector]" ) {
@@ -77,8 +78,8 @@ TEST_CASE( "vector formation", "[vector]" ) {
     tail.y = 1.0;
     vec = head - tail;
 
-    REQUIRE( vec.x == 2.0 );
-    REQUIRE( vec.y == 3.0 );
+    REQUIRE_THAT(vec.x, Catch::Matchers::WithinRel(2.0));
+    REQUIRE_THAT(vec.y, Catch::Matchers::WithinRel(3.0));
 }
 
 TEST_CASE( "vector normalize", "[vector]" ) {
@@ -102,7 +103,7 @@ TEST_CASE( "point displacement", "[point]" ) {
     tail.y = 1.0;
     p = tail + vec;
 
-    REQUIRE( p.x == 6.0 );
-    REQUIRE( p.y == 5.0 );
+    REQUIRE_THAT(p.x, Catch::Matchers::WithinRel(6.0));
+    REQUIRE_THAT(p.y, Catch::Matchers::WithinRel(5.0));
 }
 }
