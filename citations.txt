@@ -1,0 +1,20 @@
+Worked with:
+1. Srikanth Schelbert
+2. Shail Dalal
+3. Rahul Roy
+4. Ananya Agarwal
+
+Borrowed tests:
+1. TEST_CASE("inv() Transform" "[se2d]") // Rahul,Roy
+2. TEST_CASE("rotation()" "[se2d]") // Rahul,Roy
+3. TEST_CASE("translation()" "[se2d]") // Rahul,Roy
+4. TEST_CASE("matrix mult operator - operator=", "[transform]") // Srikanth,Schelbert
+5. TEST_CASE("operator()(Vector2D v)","[transform]") // Srikanth,Schelbert
+6. TEST_CASE("operator()(Point2D v)","[transform]") // Srikanth,Schelbert
+7. TEST_CASE("operator()(Twist2D t)","[transform]") // Srikanth,Schelbert
+
+Other citations:
+1. https://husarion.com/tutorials/ros2-tutorials/3-creating-nodes-services/ - ROS2 C++ nodes and services
+2. https://github.com/ros2/rosidl/issues/441#issuecomment-591025515 - Custom srv interface syntax
+3. https://chat.openai.com/share/67d0fd02-a340-4484-8b6c-03c78914dce8 - ChatGpt questions relating to C++
+4. https://chat.openai.com/share/690036f2-d4cb-47af-8fa4-52ccb47e2737 - ChatGpt questions relating to ROS
