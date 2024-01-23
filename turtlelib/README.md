@@ -32,7 +32,7 @@ A library for handling transformations in SE(2) and other turtlebot-related math
     - Cons - Reduced association with the Vector2D objects.
 
     After carefully considering the design choices described above, I chose to implement the `normalize` functionality according to Design 3. Implementing the
-    magnitude operation as a separate function increases reusabilty and since the `normalize` function is implement inside the same namespace, association is
+    magnitude operation as a separate function increases reusabilty and since the `normalize` function is implemented inside the same namespace, association is
     maintained.
 
 2. What is the difference between a class and a struct in C++?
