@@ -121,4 +121,20 @@ Transform2D operator*(Transform2D lhs, const Transform2D & rhs)
     return lhs;
 }
 
+Transform2D integrate_twist(Twist2D twist)
+{
+    if(twist.omega == 0.0){
+        return Transform2D {{twist.x,twist.y}, 0.0};
+    }
+    else{
+
+        double x = twist.y / twist.omega;
+        double y = - twist.x / twist.omega;
+        Transform2D Tsb {{x,y}, 0.0};
+        Transform2D Tbs = Tsb.inv();
+        Transform2D Tss_p {{0.0,0.0}, twist.omega};
+        
+        return Tbs*Tss_p*Tsb;
+    }
+}
 }

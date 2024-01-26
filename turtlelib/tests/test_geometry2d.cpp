@@ -216,6 +216,4 @@ TEST_CASE( "angle between two vectors", "[vector]" ) {
 
     REQUIRE_THAT(ang, Catch::Matchers::WithinAbs(2.35619, 1e-5));
 }
-
-
 }
