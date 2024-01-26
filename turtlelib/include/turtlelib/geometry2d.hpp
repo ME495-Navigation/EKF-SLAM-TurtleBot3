@@ -170,12 +170,12 @@ namespace turtlelib
     /// \brief the dot product of 2 vectors
     /// \param lhs - the first vector
     /// \param rhs - the second vector
-    Vector2D dot(Vector2D lhs, Vector2D rhs);
+    double dot(Vector2D lhs, Vector2D rhs);
 
     /// \brief the angle between 2 vectors
     /// \param lhs - the first vector
     /// \param rhs - the second vector
-    Vector2D dot(Vector2D lhs, Vector2D rhs);
+    double angle(Vector2D lhs, Vector2D rhs);
 }
 
 #endif

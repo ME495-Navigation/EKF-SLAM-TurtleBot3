@@ -93,4 +93,71 @@ Point2D operator+(const Point2D & tail, const Vector2D & disp)
     return p;
 }
 
+Vector2D operator+(const Vector2D & lhs, const Vector2D & rhs)
+{
+    Vector2D v;
+    v.x = lhs.x + rhs.x;
+    v.y = lhs.y + rhs.y;
+    return v;
+}
+
+Vector2D & Vector2D::operator+=(const Vector2D & rhs)
+{
+    x = x + rhs.x;
+    y = y + rhs.y;
+    return *this;
+}
+
+Vector2D operator-(const Vector2D & lhs, const Vector2D & rhs)
+{
+    Vector2D v;
+    v.x = lhs.x - rhs.x;
+    v.y = lhs.y - rhs.y;
+    return v;
+}   
+
+Vector2D & Vector2D::operator-=(const Vector2D & rhs)
+{
+    x = x - rhs.x;
+    y = y - rhs.y;
+    return *this;
+}
+
+Vector2D operator*(const Vector2D & v, const double & s)
+{
+    Vector2D vec;
+    vec.x = v.x * s;
+    vec.y = v.y * s;
+    return vec;
+}
+
+Vector2D operator*(const double & s, const Vector2D & v)
+{
+    Vector2D vec;
+    vec.x = v.x * s;
+    vec.y = v.y * s;
+    return vec;
+}
+
+double dot(Vector2D lhs, Vector2D rhs)
+{
+    double dt;
+    dt = lhs.x*rhs.x + lhs.y*rhs.y;
+    return dt;
+}
+
+double angle(Vector2D lhs, Vector2D rhs)
+{
+    double dotprod = dot(lhs, rhs);
+    double mag_lhs = magnitude(lhs);
+    double mag_rhs = magnitude(rhs);
+    
+    // catch division by zero
+    if (mag_lhs == 0.0 || mag_rhs == 0.0) {
+        std::cerr << "Magnitudes of both vectors are zero." << std::endl;
+        return 0.0;
+    }
+
+    return std::acos(dotprod / (mag_lhs * mag_rhs));
+}
 }
