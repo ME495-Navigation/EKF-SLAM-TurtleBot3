@@ -106,4 +106,116 @@ TEST_CASE( "point displacement", "[point]" ) {
     REQUIRE_THAT(p.x, Catch::Matchers::WithinRel(6.0));
     REQUIRE_THAT(p.y, Catch::Matchers::WithinRel(5.0));
 }
+
+TEST_CASE( "vector addition", "[vector]" ) {
+    Vector2D vec,vec_1,vec_2;
+
+    vec_1.x = 7.3;
+    vec_1.y = 5.3;
+    vec_2.x = 4.2;
+    vec_2.y = -9.7;
+
+    vec = vec_1 + vec_2;
+
+    REQUIRE_THAT(vec.x, Catch::Matchers::WithinRel(11.5));
+    REQUIRE_THAT(vec.y, Catch::Matchers::WithinRel(-4.4));
+}
+
+TEST_CASE( "vector addition to itself", "[vector]" ) {
+    Vector2D vec,vec_1;
+
+    vec.x = 4.0;
+    vec.y = -9.2;
+    vec_1.x = 7.3;
+    vec_1.y = 5.2;
+
+    vec += vec_1;
+
+    REQUIRE_THAT(vec.x, Catch::Matchers::WithinRel(11.3));
+    REQUIRE_THAT(vec.y, Catch::Matchers::WithinRel(-4.0));
+}
+
+TEST_CASE( "vector subtraction", "[vector]" ) {
+    Vector2D vec,vec_1,vec_2;
+
+    vec_1.x = 7.3;
+    vec_1.y = 5.3;
+    vec_2.x = 4.2;
+    vec_2.y = -9.7;
+
+    vec = vec_1 - vec_2;
+
+    REQUIRE_THAT(vec.x, Catch::Matchers::WithinRel(3.1));
+    REQUIRE_THAT(vec.y, Catch::Matchers::WithinRel(15.0));
+}
+
+TEST_CASE( "vector subtraction to itself", "[vector]" ) {
+    Vector2D vec,vec_1;
+
+    vec.x = 4.0;
+    vec.y = -9.2;
+    vec_1.x = 7.3;
+    vec_1.y = 5.2;
+
+    vec -= vec_1;
+
+    REQUIRE_THAT(vec.x, Catch::Matchers::WithinRel(-3.3));
+    REQUIRE_THAT(vec.y, Catch::Matchers::WithinRel(-14.4));
+}
+
+TEST_CASE( "vector multiplication by scalar on lhs", "[vector]" ) {
+    Vector2D vec,vec_1;
+    double sr = 5.0;
+
+    vec_1.x = 4.0;
+    vec_1.y = -9.2;
+    
+    vec = sr*vec_1;
+
+    REQUIRE_THAT(vec.x, Catch::Matchers::WithinRel(20.0));
+    REQUIRE_THAT(vec.y, Catch::Matchers::WithinRel(-46.0));
+}
+
+TEST_CASE( "vector multiplication by scalar on rhs", "[vector]" ) {
+    Vector2D vec,vec_1;
+    double sr = 5.0;
+
+    vec_1.x = 4.0;
+    vec_1.y = -9.2;
+    
+    vec = vec_1*sr;
+
+    REQUIRE_THAT(vec.x, Catch::Matchers::WithinRel(20.0));
+    REQUIRE_THAT(vec.y, Catch::Matchers::WithinRel(-46.0));
+}
+
+TEST_CASE( "vector dot product", "[vector]" ) {
+    Vector2D vec_1,vec_2;
+    double dtp;
+
+    vec_1.x = 7.3;
+    vec_1.y = 5.3;
+    vec_2.x = 4.2;
+    vec_2.y = -9.7;
+
+    dtp = dot(vec_1,vec_2);
+
+    REQUIRE_THAT(dtp, Catch::Matchers::WithinRel(-20.75));
+}
+
+TEST_CASE( "angle between two vectors", "[vector]" ) {
+    Vector2D vec_1,vec_2;
+    double ang;
+
+    vec_1.x = 1.0;
+    vec_1.y = 1.0;
+    vec_2.x = -1.0;
+    vec_2.y = 0.0;
+
+    ang = angle(vec_1,vec_2);
+
+    REQUIRE_THAT(ang, Catch::Matchers::WithinAbs(2.35619, 1e-5));
+}
+
+
 }
