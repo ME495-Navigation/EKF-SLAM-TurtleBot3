@@ -89,6 +89,15 @@ namespace turtlelib
 
         /// \brief the y coordinate
         double y = 0.0;
+
+        /// \brief add a vector to another
+        /// \param rhs - the vector to add
+        Vector2D & operator+=(const Vector2D & rhs);
+
+        /// \brief subtract a vector from another
+        /// \param rhs - the vector to subtract
+        Vector2D & operator-=(const Vector2D & rhs);
+
     };
 
     /// \brief Subtracting one point from another yields a vector
@@ -137,6 +146,36 @@ namespace turtlelib
     /// \brief normalize a 2d vector
     /// \param v - the vector to normalize
     Vector2D normalize(const Vector2D & v);
+
+    /// \brief addition of 2 vectors to return new vector
+    /// \param lhs - the first vector to add
+    /// \param rhs - the second vector to add
+    Vector2D operator+(const Vector2D & lhs, const Vector2D & rhs);
+
+    /// \brief subtraction of 2 vectors to return new vector
+    /// \param lhs - the first vector
+    /// \param rhs - the second vector (subtracts from first)
+    Vector2D operator-(const Vector2D & lhs, const Vector2D & rhs);
+
+    /// \brief multiply a vector by a scalar
+    /// \param v - the vector
+    /// \param s - the scalar
+    Vector2D operator*(const Vector2D & v, const double & s);
+
+    /// \brief multiply a scalar by a vector
+    /// \param s - the scalar
+    /// \param v - the vector
+    Vector2D operator*(const double & s, const Vector2D & v);
+
+    /// \brief the dot product of 2 vectors
+    /// \param lhs - the first vector
+    /// \param rhs - the second vector
+    Vector2D dot(Vector2D lhs, Vector2D rhs);
+
+    /// \brief the angle between 2 vectors
+    /// \param lhs - the first vector
+    /// \param rhs - the second vector
+    Vector2D dot(Vector2D lhs, Vector2D rhs);
 }
 
 #endif
