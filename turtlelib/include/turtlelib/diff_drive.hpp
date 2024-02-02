@@ -45,11 +45,15 @@ namespace turtlelib
 
     public:
         /// \brief The default DiffDrive class constructor
+        /// \param half_track - the distance from the body frame to the wheel frame
+        /// \param radius - the wheel radius
         DiffDrive(double half_track, double radius);
 
         /// \brief The DiffDrive class constructor
-        /// \param wheel_config - the wheel configuration
-        /// \param robot_config - the robot configuration
+        /// \param half_track - the distance from the body frame to the wheel frame
+        /// \param radius - the wheel radius
+        /// \param wheel_position - the wheel configuration
+        /// \param robot_pose - the robot configuration
         DiffDrive(double half_track, double radius, WheelConfig wheel_position, Transform2D robot_pose);
 
         /// \brief using ik given body twist, calculate wheel velocities

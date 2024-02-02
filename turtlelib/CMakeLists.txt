@@ -19,7 +19,7 @@ project(turtlelib)
 # you don't need or want to.
 # name is the name of the library without the extension or lib prefix
 # name creates a cmake "target"
-add_library(turtlelib src/geometry2d.cpp src/se2d.cpp src/svg.cpp)
+add_library(turtlelib src/geometry2d.cpp src/se2d.cpp src/svg.cpp src/diff_drive.cpp)
 
 # Use target_include_directories so that #include"mylibrary/header.hpp" works
 # The use of the <BUILD_INTERFACE> and <INSTALL_INTERFACE> is because when
@@ -104,13 +104,17 @@ if(BUILD_TESTING)
     add_executable(geometry2d_test tests/test_geometry2d.cpp)
     add_executable(se2d_test tests/test_se2d.cpp)
     add_executable(svg_test tests/test_svg.cpp)
+    add_executable(diff_drive_test tests/test_diff_drive.cpp)
 
     target_link_libraries(geometry2d_test turtlelib Catch2::Catch2WithMain)
     target_link_libraries(se2d_test turtlelib Catch2::Catch2WithMain)
     target_link_libraries(svg_test turtlelib Catch2::Catch2WithMain)
+    target_link_libraries(diff_drive_test turtlelib Catch2::Catch2WithMain)
 
     # register the test with CTest, telling it what executable to run
     add_test(NAME geometry2d_test COMMAND geometry2d_test)
     add_test(NAME se2d_test COMMAND se2d_test)
     add_test(NAME svg_test COMMAND svg_test)
+    add_test(NAME diff_drive_test COMMAND diff_drive_test)
+
 endif()
