@@ -67,6 +67,4 @@ namespace turtlelib
         Transform2D forward_kinematics(WheelConfig wheel_position);
     };
 }
-
-
 #endif
