@@ -40,14 +40,17 @@ namespace turtlelib
         /// \brief Create a robot configuration initialised to default values
         Transform2D robot_config {};
 
+        /// \brief Physical dimensions of the turtlebot in m
+        double half_trackwidth, wheel_radius;
+
     public:
         /// \brief The default DiffDrive class constructor
-        DiffDrive();
+        DiffDrive(double half_track, double radius);
 
         /// \brief The DiffDrive class constructor
         /// \param wheel_config - the wheel configuration
         /// \param robot_config - the robot configuration
-        DiffDrive(WheelConfig wheel_position, Transform2D robot_pose);
+        DiffDrive(double half_track, double radius, WheelConfig wheel_position, Transform2D robot_pose);
 
         /// \brief using ik given body twist, calculate wheel velocities
         /// \param body_twist - the body twist
