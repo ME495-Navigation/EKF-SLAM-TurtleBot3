@@ -123,7 +123,7 @@ namespace turtlelib
     Transform2D operator*(Transform2D lhs, const Transform2D & rhs);
 
     /// \brief integrate the twist for one unit of
-    /// time to fing the displaced transform
+    /// time to find the displaced transform
     /// \return the displaced transform
     Transform2D integrate_twist(Twist2D twist);
 }
