@@ -14,10 +14,15 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(nuturtlebot_msgs REQUIRED)
+find_package(turtlelib REQUIRED)
 find_package(Doxygen)
 
 add_executable(turtle_control src/turtle_control.cpp)
-ament_target_dependencies(turtle_control rclcpp std_msgs std_srvs geometry_msgs)
+ament_target_dependencies(turtle_control rclcpp std_msgs std_srvs geometry_msgs sensor_msgs
+nuturtlebot_msgs)
+target_link_libraries(turtle_control turtlelib::turtlelib)
 
 install(TARGETS
 turtle_control

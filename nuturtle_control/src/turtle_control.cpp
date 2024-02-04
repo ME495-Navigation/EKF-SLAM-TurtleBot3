@@ -9,6 +9,16 @@
 #include <iostream>
 
 #include "rclcpp/rclcpp.hpp"
+#include "geometry_msgs/msg/twist.hpp"
+#include "sensor_msgs/msg/joint_state.hpp"
+#include "nuturtlebot_msgs/msg/wheel_commands.hpp"
+#include "nuturtlebot_msgs/msg/sensor_data.hpp"
+
+#include "turtlelib/diff_drive.hpp"
+using turtlelib::DiffDrive;
+using turtlelib::WheelVelocities;
+using turtlelib::Twist2D;
+
 
 using namespace std::chrono_literals;
 
@@ -63,18 +73,74 @@ public:
       rclcpp::shutdown();
     }
 
+    // Create subscribers
+    velocity_ = create_subscription<geometry_msgs::msg::Twist>(
+      "cmd_vel",10,std::bind(&TurtleControl::velocity_callback, this, std::placeholders::_1));
+    sensor_data_ = create_subscription<nuturtlebot_msgs::msg::SensorData>(
+      "sensor_data",10,std::bind(&TurtleControl::sensor_data_callback, this, std::placeholders::_1));
+
+    // Create publishers
+    wheel_cmd_pub_ = create_publisher<nuturtlebot_msgs::msg::WheelCommands>("wheel_cmd", 10);
+    joint_pub_ = create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
+
+    // Initialize diff_drive class
+    nuturtle_ = DiffDrive{track_width/2.0, wheel_radius};
+
     // Create timer
     timer_ = create_wall_timer(
       rate, std::bind(&TurtleControl::timer_callback, this));
   }
 private:
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr velocity_;
+  rclcpp::Subscription<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_;
+  rclcpp::Publisher<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_cmd_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_pub_;
+  DiffDrive nuturtle_{0.0,0.0};
   size_t timer_count_;
   double wheel_radius, track_width, motor_cmd_max;
   double motor_cmd_per_rad_sec, encoder_ticks_per_rad, collision_radius;
 
   /// \brief The timer callback
   void timer_callback()
+  {
+    timer_count_++;
+  }
+
+  /// \brief The velocity callback
+  ///        Convert cmd_vel msgs to wheel_cmd msgs and publish
+  /// \param msg - cmd_vel message
+  void velocity_callback(const geometry_msgs::msg::Twist & msg)
+  {
+    // create a Twist2D object from the Twist msg
+    Twist2D body_twist {msg.angular.z, msg.linear.x, msg.linear.y};
+
+    // using ik, calculate the wheel velocities
+    WheelVelocities wheel_vel = nuturtle_.inverse_kinematics(body_twist);
+
+    // create a wheel_cmd message
+    nuturtlebot_msgs::msg::WheelCommands wheel_cmd;
+    // calculate vel in mcu and convert to int
+    wheel_cmd.left_velocity = static_cast<int>(wheel_vel.lw / motor_cmd_per_rad_sec);
+    wheel_cmd.right_velocity = static_cast<int>(wheel_vel.rw / motor_cmd_per_rad_sec);
+    // throttle vel to max and min values if request is outside range
+    if (wheel_cmd.left_velocity < -motor_cmd_max) {
+      wheel_cmd.left_velocity = -motor_cmd_max;
+    }
+    if (wheel_cmd.left_velocity > motor_cmd_max) {
+      wheel_cmd.left_velocity = motor_cmd_max;
+    }
+    if (wheel_cmd.right_velocity < -motor_cmd_max) {
+      wheel_cmd.right_velocity = -motor_cmd_max;
+    }
+    if (wheel_cmd.right_velocity > motor_cmd_max) {
+      wheel_cmd.right_velocity = motor_cmd_max;
+    }
+    wheel_cmd_pub_->publish(wheel_cmd);
+  }
+
+  /// \brief The sensor data callback
+  void sensor_data_callback(const nuturtlebot_msgs::msg::SensorData & msg)
   {
     timer_count_++;
   }
