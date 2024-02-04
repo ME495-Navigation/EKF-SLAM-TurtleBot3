@@ -19,6 +19,10 @@ find_package(Doxygen)
 add_executable(turtle_control src/turtle_control.cpp)
 ament_target_dependencies(turtle_control rclcpp std_msgs std_srvs geometry_msgs)
 
+install(TARGETS
+turtle_control
+DESTINATION lib/${PROJECT_NAME})
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
