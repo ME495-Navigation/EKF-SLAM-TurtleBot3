@@ -18,7 +18,7 @@
 using turtlelib::DiffDrive;
 using turtlelib::WheelVelocities;
 using turtlelib::Twist2D;
-
+using turtlelib::WheelConfig;
 
 using namespace std::chrono_literals;
 
@@ -86,6 +86,9 @@ public:
     // Initialize diff_drive class
     nuturtle_ = DiffDrive{track_width/2.0, wheel_radius};
 
+    // initialize joint states for lw and rw
+    joint_state.name = {"left_wheel", "right_wheel"};
+
     // Create timer
     timer_ = create_wall_timer(
       rate, std::bind(&TurtleControl::timer_callback, this));
@@ -96,10 +99,12 @@ private:
   rclcpp::Subscription<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_cmd_pub_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_pub_;
+  sensor_msgs::msg::JointState joint_state, prev_joint_state;
   DiffDrive nuturtle_{0.0,0.0};
   size_t timer_count_;
   double wheel_radius, track_width, motor_cmd_max;
   double motor_cmd_per_rad_sec, encoder_ticks_per_rad, collision_radius;
+  bool js_state = false;
 
   /// \brief The timer callback
   void timer_callback()
@@ -140,9 +145,34 @@ private:
   }
 
   /// \brief The sensor data callback
+  ///        Convert sensor_data msgs to joint_state msgs and publish
+  /// \param msg - sensor_data message
   void sensor_data_callback(const nuturtlebot_msgs::msg::SensorData & msg)
   {
-    timer_count_++;
+    // calculate wheel configuration in radians
+    WheelConfig wheel_config;
+    wheel_config.lw = static_cast<double>(msg.left_encoder) / encoder_ticks_per_rad;
+    wheel_config.rw = static_cast<double>(msg.right_encoder) / encoder_ticks_per_rad;
+
+    if(js_state == true){
+
+      // calculate delta t
+      double time_curr = static_cast<double> (joint_state.header.stamp.nanosec) * 1e-9;
+      double time_prev = static_cast<double> (prev_joint_state.header.stamp.nanosec) * 1e-9;
+      double dt = time_curr - time_prev;
+
+      // form updated joint state message
+      joint_state.header.stamp = msg.stamp;
+      joint_state.position[0] = wheel_config.lw;
+      joint_state.position[1] = wheel_config.rw;
+      joint_state.velocity[0] = (joint_state.position[0] - prev_joint_state.position[0])/dt;
+      joint_state.velocity[1] = (joint_state.position[1] - prev_joint_state.position[1])/dt;
+    }
+    else{
+      js_state = true;
+    }
+    joint_pub_->publish(joint_state);
+    prev_joint_state = joint_state;
   }
 };
 
