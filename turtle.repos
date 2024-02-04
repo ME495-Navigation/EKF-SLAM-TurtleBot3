@@ -1,0 +1,13 @@
+repositories:
+  catch2/Catch2:
+    type: git
+    url: https://github.com/catchorg/Catch2.git
+    version: devel
+  nuturtlebot_msgs:
+    type: git
+    url: git@github.com:ME495-Navigation/nuturtlebot_msgs.git
+    version: humble
+  slam_project:
+    type: git
+    url: git@github.com:ME495-Navigation/slam-project-241abhishek.git
+    version: main
