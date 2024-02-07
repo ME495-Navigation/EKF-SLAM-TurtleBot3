@@ -12,6 +12,8 @@
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
+#include "tf2_ros/transform_broadcaster.h"
+
 #include "turtlelib/diff_drive.hpp"
 using turtlelib::DiffDrive;
 using turtlelib::WheelVelocities;
@@ -75,6 +77,17 @@ public:
     // Create subscribers
     joint_state_ = create_subscription<sensor_msgs::msg::JointState>(
       "joint_states",10,std::bind(&Odometry::joint_state_callback, this, std::placeholders::_1));
+
+    // Create publishers
+    odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", 10);
+    
+    // Initialize the transform broadcaster
+    odom_tf_ =
+      std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+
+    // Initialize the odometry message
+    odom_msg_.header.frame_id = odom_id;
+    odom_msg_.child_frame_id = body_id;
     
     // Initialize diff_drive class
     nuturtle_ = DiffDrive{track_width/2.0, wheel_radius};
@@ -86,6 +99,9 @@ public:
 private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_;
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+  std::unique_ptr<tf2_ros::TransformBroadcaster> odom_tf_;
+  nav_msgs::msg::Odometry odom_msg_;
   std::string body_id, odom_id, wheel_left, wheel_right;
   double wheel_radius, track_width;
   size_t timer_count_;
@@ -99,7 +115,41 @@ private:
 
   void joint_state_callback(const sensor_msgs::msg::JointState & msg)
   {
-    nuturtle_.forward_kinematics(WheelConfig {msg.position[0], msg.position[1]});
+    // use fk to update the robot's configuration
+    const auto updated_config = nuturtle_.forward_kinematics(WheelConfig {msg.position.at(0), msg.position.at(1)});
+
+    // update the odometry message
+    odom_msg_.header.stamp = msg.header.stamp;
+    odom_msg_.pose.pose.position.x = updated_config.translation().x;
+    odom_msg_.pose.pose.position.y = updated_config.translation().y;
+    odom_msg_.pose.pose.orientation.z = updated_config.rotation();
+
+    const auto robot_twist = nuturtle_.robot_body_twist(WheelConfig {msg.position.at(0), msg.position.at(1)});
+    odom_msg_.twist.twist.linear.x = robot_twist.x;
+    odom_msg_.twist.twist.linear.y = robot_twist.y;
+    odom_msg_.twist.twist.angular.z = robot_twist.omega;
+
+    // publish the odometry message
+    odom_pub_->publish(odom_msg_);
+
+    // publish the robot's transform
+    geometry_msgs::msg::TransformStamped t;
+
+    t.header.stamp = this->get_clock()->now();
+    t.header = odom_msg_.header;
+    t.child_frame_id = odom_msg_.child_frame_id;
+
+    t.transform.translation.x = odom_msg_.pose.pose.position.x;
+    t.transform.translation.y = odom_msg_.pose.pose.position.y ;
+    t.transform.translation.z = 0.0;
+
+    t.transform.rotation.x = 0.0;
+    t.transform.rotation.y = 0.0;
+    t.transform.rotation.z = odom_msg_.pose.pose.orientation.z;
+    t.transform.rotation.w = 1.0;
+
+    // Send the transformation
+    odom_tf_->sendTransform(t);
   }
 };
 

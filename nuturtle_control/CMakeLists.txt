@@ -11,6 +11,8 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -27,7 +29,7 @@ target_link_libraries(turtle_control turtlelib::turtlelib)
 
 add_executable(odometry src/odometry.cpp)
 ament_target_dependencies(odometry rclcpp std_msgs std_srvs geometry_msgs sensor_msgs
-nuturtlebot_msgs nav_msgs)
+nuturtlebot_msgs nav_msgs tf2_ros tf2)
 target_link_libraries(odometry turtlelib::turtlelib)
 
 install(TARGETS
