@@ -15,6 +15,7 @@ find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
 find_package(turtlelib REQUIRED)
 find_package(Doxygen)
@@ -26,7 +27,7 @@ target_link_libraries(turtle_control turtlelib::turtlelib)
 
 add_executable(odometry src/odometry.cpp)
 ament_target_dependencies(odometry rclcpp std_msgs std_srvs geometry_msgs sensor_msgs
-nuturtlebot_msgs)
+nuturtlebot_msgs nav_msgs)
 target_link_libraries(odometry turtlelib::turtlelib)
 
 install(TARGETS
