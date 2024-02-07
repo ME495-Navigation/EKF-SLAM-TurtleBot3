@@ -19,7 +19,9 @@ using turtlelib::DiffDrive;
 using turtlelib::WheelVelocities;
 using turtlelib::Twist2D;
 using turtlelib::WheelConfig;
+using turtlelib::Transform2D;
 
+#include "nuturtle_control/srv/initial_pose.hpp"
 
 using namespace std::chrono_literals;
 
@@ -80,6 +82,11 @@ public:
 
     // Create publishers
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", 10);
+
+    // Create services
+    initial_pose_ = create_service<nuturtle_control::srv::InitialPose>(
+      "~/initial_pose", 
+      std::bind(&Odometry::initial_pose_callback, this, std::placeholders::_1, std::placeholders::_2));
     
     // Initialize the transform broadcaster
     odom_tf_ =
@@ -100,6 +107,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+  rclcpp::Service<nuturtle_control::srv::InitialPose>::SharedPtr initial_pose_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> odom_tf_;
   nav_msgs::msg::Odometry odom_msg_;
   std::string body_id, odom_id, wheel_left, wheel_right;
@@ -113,6 +121,7 @@ private:
     timer_count_++;
   }
 
+  /// \brief Update the robot configuration and publish the odometry message/transform
   void joint_state_callback(const sensor_msgs::msg::JointState & msg)
   {
     // use fk to update the robot's configuration
@@ -151,6 +160,16 @@ private:
     // Send the transformation
     odom_tf_->sendTransform(t);
   }
+
+  /// \brief Callback for the initial pose service
+  void initial_pose_callback(
+    nuturtle_control::srv::InitialPose::Request::SharedPtr req,
+    nuturtle_control::srv::InitialPose::Response::SharedPtr res)
+    {
+      // update the robot's configuration to the specified initial pose
+      nuturtle_.set_robot_config(Transform2D {{req->x,req->y},req->theta});
+      res->success = true;
+    }
 };
 
 /// \brief The main fucntion.

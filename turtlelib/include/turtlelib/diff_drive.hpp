@@ -56,6 +56,10 @@ namespace turtlelib
         /// \param robot_pose - the robot configuration
         DiffDrive(double half_track, double radius, WheelConfig wheel_position, Transform2D robot_pose);
 
+        /// \brief Modifies the robot configuration
+        /// \param robot_pose - the new robot configuration
+        void set_robot_config(Transform2D robot_pose);
+
         /// \brief new wheel positions, calculate body twist
         /// \param wheel_position - the new wheel positions
         /// \return updated robot body twist

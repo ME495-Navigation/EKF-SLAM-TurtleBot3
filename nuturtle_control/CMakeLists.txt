@@ -20,7 +20,11 @@ find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
 find_package(turtlelib REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 find_package(Doxygen)
+
+rosidl_generate_interfaces(${PROJECT_NAME}_srv "srv/InitialPose.srv" LIBRARY_NAME ${PROJECT_NAME})
+rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_srv "rosidl_typesupport_cpp")
 
 add_executable(turtle_control src/turtle_control.cpp)
 ament_target_dependencies(turtle_control rclcpp std_msgs std_srvs geometry_msgs sensor_msgs
@@ -31,6 +35,8 @@ add_executable(odometry src/odometry.cpp)
 ament_target_dependencies(odometry rclcpp std_msgs std_srvs geometry_msgs sensor_msgs
 nuturtlebot_msgs nav_msgs tf2_ros tf2)
 target_link_libraries(odometry turtlelib::turtlelib)
+
+target_link_libraries(odometry "${cpp_typesupport_target}")
 
 install(TARGETS
 turtle_control odometry
@@ -63,5 +69,11 @@ if(${DOXYGEN_FOUND} AND ${BUILD_DOCS})
     # The documentation will be in the build/html directory
     # The main page is build/html/index.html
 endif()
+
+install(DIRECTORY
+        # launch
+        srv
+        # config
+        DESTINATION share/${PROJECT_NAME}/)
 
 ament_package()

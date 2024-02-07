@@ -21,6 +21,10 @@ namespace turtlelib{
     wheel_radius(radius)
     {}
 
+    void DiffDrive::set_robot_config(Transform2D robot_pose){
+        robot_config = robot_pose;
+    }
+
     Twist2D DiffDrive::robot_body_twist(WheelConfig wheel_position) const{
         // assume absolute encoder readings (from initial wheel position)
         // this won't matter as we are working with difference
@@ -38,7 +42,6 @@ namespace turtlelib{
 
         return body_twist;
     }
-
 
     WheelVelocities DiffDrive::inverse_kinematics(Twist2D body_twist){
         WheelVelocities wheel_vel;
