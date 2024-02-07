@@ -23,7 +23,7 @@ find_package(turtlelib REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(Doxygen)
 
-rosidl_generate_interfaces(${PROJECT_NAME}_srv "srv/InitialPose.srv" LIBRARY_NAME ${PROJECT_NAME})
+rosidl_generate_interfaces(${PROJECT_NAME}_srv "srv/InitialPose.srv" "srv/Control.srv" LIBRARY_NAME ${PROJECT_NAME})
 rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_srv "rosidl_typesupport_cpp")
 
 add_executable(turtle_control src/turtle_control.cpp)
@@ -41,6 +41,7 @@ ament_target_dependencies(circle rclcpp std_msgs std_srvs geometry_msgs sensor_m
 target_link_libraries(circle turtlelib::turtlelib)
 
 target_link_libraries(odometry "${cpp_typesupport_target}")
+target_link_libraries(circle "${cpp_typesupport_target}")
 
 install(TARGETS
 turtle_control odometry circle

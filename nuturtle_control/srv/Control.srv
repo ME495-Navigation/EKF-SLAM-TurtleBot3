@@ -1,0 +1,4 @@
+float64 velocity # angular velocity
+float64 radius # radius of the arc
+---
+bool success
