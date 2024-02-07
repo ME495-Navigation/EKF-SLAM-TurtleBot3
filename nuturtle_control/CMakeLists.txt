@@ -36,10 +36,14 @@ ament_target_dependencies(odometry rclcpp std_msgs std_srvs geometry_msgs sensor
 nuturtlebot_msgs nav_msgs tf2_ros tf2)
 target_link_libraries(odometry turtlelib::turtlelib)
 
+add_executable(circle src/circle.cpp)
+ament_target_dependencies(circle rclcpp std_msgs std_srvs geometry_msgs sensor_msgs)
+target_link_libraries(circle turtlelib::turtlelib)
+
 target_link_libraries(odometry "${cpp_typesupport_target}")
 
 install(TARGETS
-turtle_control odometry
+turtle_control odometry circle
 DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
