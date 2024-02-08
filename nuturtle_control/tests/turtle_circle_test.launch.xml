@@ -5,7 +5,7 @@
     This file will hold the results of the test.
     Description attribute of this tag is optional for XML launch files.
     -->
-    <catch2_launch_file description='A Catch2 integration test launch file of turtle_odom_test_node'/>
+    <catch2_launch_file description='A Catch2 integration test launch file of turtle_circle_test'/>
 
     <!-- Specific launch arguments can also be included at the user's discretion -->
     <arg 
@@ -17,11 +17,8 @@
     <!-- Auxiliary nodes can be run like normal to test integration between nodes -->
     <node
         pkg='nuturtle_control'
-        exec='odometry' >
-        <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
-        <param name="body_id" value = "base_footprint" />
-        <param name = "wheel_left" value = "left" />
-        <param name = "wheel_right" value = "right" />
+        exec='circle' >
+        <param name = "frequency" value = "200.0" />
     </node>
 
     <!--
@@ -34,7 +31,7 @@
     -->
     <catch2_integration_test_node
         pkg='nuturtle_control'
-        exec='turtle_odom_test_node'
+        exec='turtle_circle_test'
     >
         <param name='test_duration' value='$(var test_duration)'/>
     </catch2_integration_test_node>
