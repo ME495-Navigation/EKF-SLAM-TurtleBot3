@@ -80,7 +80,7 @@ if(BUILD_TESTING)
     rclcpp std_srvs geometry_msgs nuturtlebot_msgs sensor_msgs
   )
   ament_target_dependencies(turtle_odom_test_node
-    rclcpp std_srvs geometry_msgs nuturtlebot_msgs sensor_msgs
+    rclcpp std_srvs geometry_msgs sensor_msgs tf2_ros tf2
   )
 
   install(TARGETS
