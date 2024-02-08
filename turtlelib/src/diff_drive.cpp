@@ -21,8 +21,20 @@ namespace turtlelib{
     wheel_radius(radius)
     {}
 
+    Transform2D DiffDrive::get_robot_config() const{
+        return robot_config;
+    }
+
     void DiffDrive::set_robot_config(Transform2D robot_pose){
         robot_config = robot_pose;
+    }
+
+    WheelConfig DiffDrive::get_wheel_config() const{
+        return wheel_config;
+    }
+
+    void DiffDrive::set_wheel_config(WheelConfig wheel_position){
+        wheel_config = wheel_position;
     }
 
     Twist2D DiffDrive::robot_body_twist(WheelConfig wheel_position) const{

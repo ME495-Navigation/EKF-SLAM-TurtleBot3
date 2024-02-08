@@ -16,6 +16,8 @@ find_package(std_srvs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(visualization_msgs REQUIRED)
+find_package(nuturtlebot_msgs REQUIRED)
+find_package(turtlelib REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(Doxygen)
 
@@ -23,9 +25,10 @@ rosidl_generate_interfaces(${PROJECT_NAME}_srv "srv/Teleport.srv" LIBRARY_NAME $
 rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_srv "rosidl_typesupport_cpp")
 
 add_executable(nusim src/nusim.cpp)
-ament_target_dependencies(nusim rclcpp std_msgs std_srvs tf2_ros tf2 visualization_msgs)
+ament_target_dependencies(nusim rclcpp std_msgs std_srvs
+tf2_ros tf2 visualization_msgs nuturtlebot_msgs)
 
-target_link_libraries(nusim "${cpp_typesupport_target}")
+target_link_libraries(nusim turtlelib::turtlelib "${cpp_typesupport_target}")
 
 install(TARGETS
 nusim

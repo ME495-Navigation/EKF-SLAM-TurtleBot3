@@ -188,9 +188,6 @@ class TurtleControl : public rclcpp::Node {
     }
     joint_pub_->publish(joint_state);
     prev_joint_state = joint_state;
-
-    // sensor_msgs::msg::JointState js;
-    // joint_pub_->publish(js);
   }
 };
 

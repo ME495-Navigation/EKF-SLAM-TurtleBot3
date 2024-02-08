@@ -31,11 +31,20 @@
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int64.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
+#include "nuturtlebot_msgs/msg/wheel_commands.hpp"
+#include "nuturtlebot_msgs/msg/sensor_data.hpp"
+#include "turtlelib/diff_drive.hpp"
 
 #include "tf2_ros/transform_broadcaster.h"
 
 #include "std_srvs/srv/empty.hpp"
 #include "nusim/srv/teleport.hpp"
+
+using turtlelib::DiffDrive;
+using turtlelib::Twist2D;
+using turtlelib::WheelConfig;
+using turtlelib::WheelVelocities;
+using turtlelib::Transform2D;
 
 using namespace std::chrono_literals;
 
@@ -52,6 +61,7 @@ public:
     declare_parameter("rate", 200.0, timer_param_desc);
     double timer_rate = get_parameter("rate").as_double();
     std::chrono::milliseconds rate = std::chrono::milliseconds(int(1000.0 / timer_rate));
+    sim_timestep = 1.0 / timer_rate;
 
     declare_parameter("x0", 0.0);
     x_tele = get_parameter("x0").as_double();
@@ -80,15 +90,57 @@ public:
     declare_parameter("obstacles.r", 0.1);
     obstacles_r = get_parameter("obstacles.r").as_double();
 
+    declare_parameter("wheel_radius", -1.0);
+    wheel_radius = get_parameter("wheel_radius").as_double();
+    if (wheel_radius < 0.0) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Parameter wheel_radius was not set");
+    }
+    declare_parameter("track_width", -1.0);
+    track_width = get_parameter("track_width").as_double();
+    if (track_width < 0.0) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Parameter track_width was not set");
+    }
+    declare_parameter("motor_cmd_max", -1.0);
+    motor_cmd_max = get_parameter("motor_cmd_max").as_double();
+    if (motor_cmd_max < 0.0) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Parameter motor_cmd_max was not set");
+    }
+    declare_parameter("motor_cmd_per_rad_sec", -1.0);
+    motor_cmd_per_rad_sec = get_parameter("motor_cmd_per_rad_sec").as_double();
+    if (motor_cmd_per_rad_sec < 0.0) {
+      RCLCPP_ERROR_STREAM(get_logger(),
+                          "Parameter motor_cmd_per_rad_sec was not set");
+    }
+    declare_parameter("encoder_ticks_per_rad", -1.0);
+    encoder_ticks_per_rad = get_parameter("encoder_ticks_per_rad").as_double();
+    if (encoder_ticks_per_rad < 0.0) {
+      RCLCPP_ERROR_STREAM(get_logger(),
+                          "Parameter encoder_ticks_per_rad was not set");
+    }
+    declare_parameter("collision_radius", -1.0);
+    collision_radius = get_parameter("collision_radius").as_double();
+    if (collision_radius < 0.0) {
+      RCLCPP_ERROR_STREAM(get_logger(),
+                          "Parameter collision radius was not set");
+    }
+
+    // Initialize diff_drive class
+    robot_ = DiffDrive{track_width / 2.0, wheel_radius};
+
     // Set QoS settings for the Marker topic
     rclcpp::QoS qos(rclcpp::KeepLast(10));
     qos.transient_local();
+
+    // Create subscription
+    wheel_cmd_sub = create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
+      "red/cmd_vel", 10, std::bind(&NuSim::wheel_cmd_callback, this, std::placeholders::_1));
 
     // Create publishers
     timestep_publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
     arena_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/walls", qos);
     obstacle_publisher_ =
       create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", qos);
+    sensor_data_publisher_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("red/sensor_data", 10);
 
     // Create services
     reset_ = create_service<std_srvs::srv::Empty>(
@@ -109,17 +161,24 @@ public:
   }
 
 private:
+  rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_cmd_sub;
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr timestep_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr arena_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacle_publisher_;
+  rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_publisher_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_;
   rclcpp::Service<nusim::srv::Teleport>::SharedPtr teleport_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   rclcpp::TimerBase::SharedPtr timer_;
   double x_tele, y_tele, theta_tele, reset_x, reset_y, reset_theta;
   double arena_x, arena_y, wall_thickness = 0.5;
+  double wheel_radius, track_width, motor_cmd_max;
+  double motor_cmd_per_rad_sec, encoder_ticks_per_rad, collision_radius;
   std::vector<double> obstacles_x{}, obstacles_y{};
-  double obstacles_r;
+  double obstacles_r, sim_timestep;
+  // WheelVelocities wheel_vels {0.0, 0.0};
+  WheelConfig wheel_position {0.0, 0.0};
+  DiffDrive robot_ {0.0, 0.0, {0.0, 0.0}, {{x_tele, y_tele}, theta_tele}};
   size_t timer_count_;
 
   /// \brief The timer callback
@@ -130,10 +189,39 @@ private:
     message.data = timer_count_;
     timestep_publisher_->publish(message);
     timer_count_++;
+    update_robot_config(wheel_position);
     transform_publisher();
     // publish walls and obstacles
     walls_publisher();
     obstacles_publisher();
+  }
+
+  /// \brief Updated robot config frame publisher
+  void update_robot_config(const WheelConfig wheel)
+  {
+    const auto robot_configuration = robot_.forward_kinematics(wheel);
+    x_tele = robot_configuration.translation().x;
+    y_tele = robot_configuration.translation().y;
+    theta_tele = robot_configuration.rotation();
+  }
+
+  /// \brief Sensor data publisher
+  void sensor_data_publisher()
+  {
+    auto sen_msg = nuturtlebot_msgs::msg::SensorData();
+    sen_msg.stamp = rclcpp::Clock().now();
+    sen_msg.left_encoder = (robot_.get_wheel_config().lw)*encoder_ticks_per_rad;
+    sen_msg.right_encoder = (robot_.get_wheel_config().rw)*encoder_ticks_per_rad;
+    sensor_data_publisher_->publish(sen_msg);
+  }
+
+  /// \brief The wheel command callback
+  void wheel_cmd_callback(const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg)
+  { 
+    // update the wheel configurations
+    wheel_position.lw= static_cast<double>(msg->left_velocity) * motor_cmd_per_rad_sec * sim_timestep;
+    wheel_position.rw = static_cast<double>(msg->right_velocity) * motor_cmd_per_rad_sec * sim_timestep;
+    robot_.set_wheel_config(wheel_position);
   }
 
   /// \brief Callback for the reset service.
@@ -146,6 +234,9 @@ private:
     x_tele = reset_x;
     y_tele = reset_y;
     theta_tele = reset_theta;
+    // reset the robot configuration
+    Transform2D robot_pose {{x_tele, y_tele}, theta_tele};
+    robot_.set_robot_config(robot_pose);
   }
 
   /// \brief Broadcasts the transform betweem world and
@@ -185,6 +276,8 @@ private:
     RCLCPP_INFO_STREAM(
       get_logger(), "Teleporting to x:" << x_tele << " y:" << y_tele << " theta:" << theta_tele);
     response->success = true;
+    Transform2D pose {{x_tele, y_tele}, theta_tele};
+    robot_.set_robot_config(pose);
   }
 
   /// \brief Arena walls publisher.
