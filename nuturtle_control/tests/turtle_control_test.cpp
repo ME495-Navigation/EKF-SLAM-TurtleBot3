@@ -24,8 +24,8 @@ void wheel_cmd_callback(
 }
 
 void joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg) {
-  left_position = msg->position[0];
-  right_position = msg->position[1];
+  left_position = msg->position.at(0);
+  right_position = msg->position.at(1);
   j_state = true;
 }
 
@@ -109,33 +109,33 @@ TEST_CASE("pure rotation", "[turtle control integration]") {
   REQUIRE(right_velocity == 101);
 };
 
-// TEST_CASE("sensor data to joint states", "[turtle control integration]") {
-//   auto node = rclcpp::Node::make_shared("turtle_control_test");
+TEST_CASE("sensor data to joint states", "[turtle control integration]") {
+  auto node = rclcpp::Node::make_shared("turtle_control_test");
 
-//   // create publishers
-//   auto sensor_data_pub_ =
-//       node->create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data", 10);
+  // create publishers
+  auto sensor_data_pub_ =
+      node->create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data", 10);
 
-//   // create subscribers
-//   auto js =
-//       node->create_subscription<sensor_msgs::msg::JointState>(
-//           "joint_states", 10, &joint_state_callback);
+  // create subscribers
+  auto js =
+      node->create_subscription<sensor_msgs::msg::JointState>(
+          "joint_states", 10, &joint_state_callback);
 
-//   // create sensor data message
-//   nuturtlebot_msgs::msg::SensorData sensor_data;
-//   sensor_data.stamp = rclcpp::Clock().now();
-//   sensor_data.left_encoder = 1000;
-//   sensor_data.right_encoder = 1000;
+  // create sensor data message
+  nuturtlebot_msgs::msg::SensorData sensor_data;
+  sensor_data.left_encoder = 1000;
+  sensor_data.right_encoder = 1000;
 
-//   rclcpp::Time start_time = rclcpp::Clock().now();
+  rclcpp::Time start_time = rclcpp::Clock().now();
 
-//   // Keep test running only for the length of the "test_duration" parameter
-//   // (in seconds)
-//   while (rclcpp::ok() && j_state == false) {
-//     sensor_data_pub_->publish(sensor_data);
-//     rclcpp::spin_some(node);
-//   }
-//   // Test assertions - check that the dummy node was found
-//  REQUIRE_THAT(left_position , Catch::Matchers::WithinRel(1.53398));
-//  REQUIRE_THAT(right_position, Catch::Matchers::WithinRel(1.53398));
-// };
+  // Keep test running only for the length of the "test_duration" parameter
+  // (in seconds)
+  while (rclcpp::ok() && j_state == false) {
+    sensor_data.stamp = rclcpp::Clock().now();
+    sensor_data_pub_->publish(sensor_data);
+    rclcpp::spin_some(node);
+  }
+  // Test assertions - check that the dummy node was found
+ REQUIRE_THAT(left_position , Catch::Matchers::WithinAbs(1.53398, 0.01));
+ REQUIRE_THAT(right_position, Catch::Matchers::WithinAbs(1.53398, 0.01));
+};

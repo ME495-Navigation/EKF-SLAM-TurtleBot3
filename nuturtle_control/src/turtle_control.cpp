@@ -94,6 +94,8 @@ class TurtleControl : public rclcpp::Node {
 
     // initialize joint states for lw and rw
     joint_state.name = {"left_wheel", "right_wheel"};
+    joint_state.position = {0.0, 0.0};
+    joint_state.velocity = {0.0, 0.0};
 
     // Create timer
     timer_ = create_wall_timer(rate,
@@ -186,6 +188,9 @@ class TurtleControl : public rclcpp::Node {
     }
     joint_pub_->publish(joint_state);
     prev_joint_state = joint_state;
+
+    // sensor_msgs::msg::JointState js;
+    // joint_pub_->publish(js);
   }
 };
 

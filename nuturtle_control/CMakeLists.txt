@@ -132,7 +132,7 @@ if(${DOXYGEN_FOUND} AND ${BUILD_DOCS})
 endif()
 
 install(DIRECTORY
-        # launch
+        launch
         srv
         # tests
         DESTINATION share/${PROJECT_NAME}/)
