@@ -65,25 +65,39 @@ if(BUILD_TESTING)
   add_executable(turtle_control_test
     tests/turtle_control_test.cpp
   )
+  add_executable(turtle_odom_test_node
+    tests/turtle_odom_test_node.cpp
+  )
 
   target_link_libraries(turtle_control_test
     catch_ros2::catch_ros2_with_node_main
   )
+  target_link_libraries(turtle_odom_test_node
+    catch_ros2::catch_ros2_with_node_main "${cpp_typesupport_target}"
+  )
+
   ament_target_dependencies(turtle_control_test
     rclcpp std_srvs geometry_msgs nuturtlebot_msgs sensor_msgs
   )
+  ament_target_dependencies(turtle_odom_test_node
+    rclcpp std_srvs geometry_msgs nuturtlebot_msgs sensor_msgs
+  )
+
   install(TARGETS
-  turtle_control_test
+  turtle_control_test turtle_odom_test_node
     DESTINATION lib/${PROJECT_NAME}
   )
 
   install(FILES
-    tests/turtle_control_test.launch.xml  # example in XML
+    tests/turtle_control_test.launch.xml  tests/turtle_odom_test.launch.xml
     DESTINATION share/${PROJECT_NAME}
   )
 
   catch_ros2_add_integration_test(turtle_control_test
     LAUNCH_FILE turtle_control_test.launch.xml  # example in XML
+  )
+  catch_ros2_add_integration_test(turtle_odom_test_node
+    LAUNCH_FILE turtle_odom_test.launch.xml  # example in XML
   )
 endif()
 

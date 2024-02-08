@@ -85,7 +85,7 @@ class Odometry : public rclcpp::Node {
 
     // Create services
     initial_pose_ = create_service<nuturtle_control::srv::InitialPose>(
-        "~/initial_pose",
+        "initial_pose",
         std::bind(&Odometry::initial_pose_callback, this, std::placeholders::_1,
                   std::placeholders::_2));
 

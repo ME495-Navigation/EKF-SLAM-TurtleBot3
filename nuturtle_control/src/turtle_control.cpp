@@ -78,7 +78,7 @@ class TurtleControl : public rclcpp::Node {
         "cmd_vel", 10,
         std::bind(&TurtleControl::velocity_callback, this,
                   std::placeholders::_1));
-    sensor_data_ = create_subscription<nuturtlebot_msgs::msg::SensorData>(
+    s_data_ = create_subscription<nuturtlebot_msgs::msg::SensorData>(
         "sensor_data", 10,
         std::bind(&TurtleControl::sensor_data_callback, this,
                   std::placeholders::_1));
@@ -104,7 +104,7 @@ class TurtleControl : public rclcpp::Node {
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr velocity_;
   rclcpp::Subscription<nuturtlebot_msgs::msg::SensorData>::SharedPtr
-      sensor_data_;
+      s_data_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr
       wheel_cmd_pub_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_pub_;
@@ -156,7 +156,6 @@ class TurtleControl : public rclcpp::Node {
   ///        Convert sensor_data msgs to joint_state msgs and publish
   /// \param msg - sensor_data message
   void sensor_data_callback(const nuturtlebot_msgs::msg::SensorData &msg) {
-
     // calculate wheel configuration in radians
     WheelConfig wheel_config;
     wheel_config.lw =

@@ -117,7 +117,7 @@ TEST_CASE("pure rotation", "[turtle control integration]") {
 //       node->create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data", 10);
 
 //   // create subscribers
-//   auto joint_state =
+//   auto js =
 //       node->create_subscription<sensor_msgs::msg::JointState>(
 //           "joint_states", 10, &joint_state_callback);
 
