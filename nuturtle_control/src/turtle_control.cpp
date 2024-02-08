@@ -122,6 +122,7 @@ class TurtleControl : public rclcpp::Node {
   ///        Convert cmd_vel msgs to wheel_cmd msgs and publish
   /// \param msg - cmd_vel message
   void velocity_callback(const geometry_msgs::msg::Twist &msg) {
+
     // create a Twist2D object from the Twist msg
     Twist2D body_twist{msg.angular.z, msg.linear.x, msg.linear.y};
 
@@ -155,12 +156,18 @@ class TurtleControl : public rclcpp::Node {
   ///        Convert sensor_data msgs to joint_state msgs and publish
   /// \param msg - sensor_data message
   void sensor_data_callback(const nuturtlebot_msgs::msg::SensorData &msg) {
+
     // calculate wheel configuration in radians
     WheelConfig wheel_config;
     wheel_config.lw =
         static_cast<double>(msg.left_encoder) / encoder_ticks_per_rad;
     wheel_config.rw =
         static_cast<double>(msg.right_encoder) / encoder_ticks_per_rad;
+
+    // build joint_state message
+    joint_state.header.stamp = msg.stamp;
+    joint_state.position.at(0) = wheel_config.lw;
+    joint_state.position.at(1) = wheel_config.rw;
 
     if (js_state == true) {
       // calculate delta t
@@ -170,10 +177,7 @@ class TurtleControl : public rclcpp::Node {
           static_cast<double>(prev_joint_state.header.stamp.nanosec) * 1e-9;
       double dt = time_curr - time_prev;
 
-      // form updated joint state message
-      joint_state.header.stamp = msg.stamp;
-      joint_state.position[0] = wheel_config.lw;
-      joint_state.position[1] = wheel_config.rw;
+      // form updated joint state message with velocity
       joint_state.velocity[0] =
           (joint_state.position[0] - prev_joint_state.position[0]) / dt;
       joint_state.velocity[1] =

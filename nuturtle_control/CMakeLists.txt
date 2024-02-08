@@ -70,7 +70,7 @@ if(BUILD_TESTING)
     catch_ros2::catch_ros2_with_node_main
   )
   ament_target_dependencies(turtle_control_test
-    rclcpp std_srvs geometry_msgs nuturtlebot_msgs
+    rclcpp std_srvs geometry_msgs nuturtlebot_msgs sensor_msgs
   )
   install(TARGETS
   turtle_control_test
