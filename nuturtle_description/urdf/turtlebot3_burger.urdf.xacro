@@ -4,7 +4,7 @@
   <!-- <xacro:include filename="$(find turtlebot3_description)/urdf/common_properties.urdf"/> -->
 
   <xacro:property name="ddrive_params" value="$(find nuturtle_description)/config/diff_params.yaml" />
-  <xacro:property name="params" value="${xacro.load_yaml(ddrive_params)['ros__parameters']}" />
+  <xacro:property name="params" value="${xacro.load_yaml(ddrive_params)['/**']['ros__parameters']}" />
 
   <xacro:property name="wheel_radius"  value="${params['wheel_radius']}" />
   <xacro:property name="track_width"  value="${params['track_width']}" />

@@ -132,6 +132,7 @@ if(${DOXYGEN_FOUND} AND ${BUILD_DOCS})
 endif()
 
 install(DIRECTORY
+        config
         launch
         srv
         # tests

@@ -131,9 +131,9 @@ public:
     rclcpp::QoS qos(rclcpp::KeepLast(10));
     qos.transient_local();
 
-    // Create subscription
+    // Create subscribers
     wheel_cmd_sub = create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
-      "red/cmd_vel", 10, std::bind(&NuSim::wheel_cmd_callback, this, std::placeholders::_1));
+      "red/wheel_cmd", 10, std::bind(&NuSim::wheel_cmd_callback, this, std::placeholders::_1));
 
     // Create publishers
     timestep_publisher_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
@@ -190,6 +190,7 @@ private:
     timestep_publisher_->publish(message);
     timer_count_++;
     update_robot_config(wheel_position);
+    sensor_data_publisher();
     transform_publisher();
     // publish walls and obstacles
     walls_publisher();
@@ -200,6 +201,7 @@ private:
   void update_robot_config(const WheelConfig wheel)
   {
     const auto robot_configuration = robot_.forward_kinematics(wheel);
+    std::cout << robot_.get_wheel_config().lw << std::endl;
     x_tele = robot_configuration.translation().x;
     y_tele = robot_configuration.translation().y;
     theta_tele = robot_configuration.rotation();
@@ -218,10 +220,10 @@ private:
   /// \brief The wheel command callback
   void wheel_cmd_callback(const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg)
   { 
+    RCLCPP_ERROR_STREAM(get_logger(), "Wheel command received");
     // update the wheel configurations
-    wheel_position.lw= static_cast<double>(msg->left_velocity) * motor_cmd_per_rad_sec * sim_timestep;
-    wheel_position.rw = static_cast<double>(msg->right_velocity) * motor_cmd_per_rad_sec * sim_timestep;
-    robot_.set_wheel_config(wheel_position);
+    wheel_position.lw += static_cast<double>(msg->left_velocity) * motor_cmd_per_rad_sec * sim_timestep;
+    wheel_position.rw += static_cast<double>(msg->right_velocity) * motor_cmd_per_rad_sec * sim_timestep;
   }
 
   /// \brief Callback for the reset service.
@@ -249,13 +251,13 @@ private:
     t.header.frame_id = "nusim/world";
     t.child_frame_id = "red/base_footprint";
 
-    t.transform.translation.x = x_tele;
-    t.transform.translation.y = y_tele;
+    t.transform.translation.x = robot_.get_robot_config().translation().x;
+    t.transform.translation.y = robot_.get_robot_config().translation().y;
     t.transform.translation.z = 0.0;
 
     t.transform.rotation.x = 0.0;
     t.transform.rotation.y = 0.0;
-    t.transform.rotation.z = theta_tele;
+    t.transform.rotation.z = robot_.get_robot_config().rotation();
     t.transform.rotation.w = 1.0;
 
     // Send the transformation
