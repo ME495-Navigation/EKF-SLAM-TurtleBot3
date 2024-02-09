@@ -27,6 +27,13 @@
     <param name="frequency" value="100.0" /> 
   </node>
   </group>
+
+  <node
+      pkg='nuturtle_control'
+      exec='turtle_control' 
+      args = " --remap wheel_cmd:=red/wheel_cmd --remap sensor_data:=red/sensor_data" >
+      <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+  </node>
   
   <!-- simulator -->
   <group if="$(eval '\'$(var robot)\' == \'nusim\' and \'$(var use_rviz)\' == \'true\'')">
@@ -53,12 +60,6 @@
         <param name="body_id" value = "blue/base_footprint" />
         <param name = "wheel_left" value = "left_joint" />
         <param name = "wheel_right" value = "right_joint" />
-    </node>
-    <node
-        pkg='nuturtle_control'
-        exec='turtle_control' 
-        args = " --remap wheel_cmd:=red/wheel_cmd --remap sensor_data:=red/sensor_data" >
-        <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
     </node>
   </group>
 
