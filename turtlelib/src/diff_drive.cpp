@@ -86,14 +86,14 @@ namespace turtlelib{
         body_twist.x = 0.5*wheel_radius*cos(robot_config.rotation())*(wheel_vel.rw + wheel_vel.lw);
         body_twist.y = 0.5*wheel_radius*sin(robot_config.rotation())*(wheel_vel.rw + wheel_vel.lw);
 
-        // double x = body_twist.x + robot_config.translation().x;
-        // double y = body_twist.y + robot_config.translation().y;
-        // double theta = body_twist.omega + robot_config.rotation();
-        // Transform2D robot_pose {{x, y}, theta};
-        // robot_config = robot_pose;
-
-        Transform2D robot_pose {{body_twist.x, body_twist.y}, body_twist.omega};
+        double x = body_twist.x + robot_config.translation().x;
+        double y = body_twist.y + robot_config.translation().y;
+        double theta = body_twist.omega + robot_config.rotation();
+        Transform2D robot_pose {{x, y}, theta};
         robot_config = robot_pose;
+
+        // Transform2D robot_pose {{body_twist.x, body_twist.y}, body_twist.omega};
+        // robot_config = robot_pose;
 
         // // update robot configuration in the world frame
         // robot_config *= integrate_twist(body_twist);

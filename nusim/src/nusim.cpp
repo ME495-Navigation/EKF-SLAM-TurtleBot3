@@ -203,9 +203,9 @@ private:
   void update_robot_config(const WheelConfig wheel)
   {
     const auto robot_configuration = robot_.forward_kinematics(wheel);
-    std::cout << "left wheel: " << robot_.get_wheel_config().lw << std::endl;
-    std::cout << "right wheel: " << robot_.get_wheel_config().rw << std::endl; 
-    std::cout << "robot rot: " << robot_.get_robot_config().rotation() << std::endl;
+    // std::cout << "left wheel: " << robot_.get_wheel_config().lw << std::endl;
+    // std::cout << "right wheel: " << robot_.get_wheel_config().rw << std::endl; 
+    // std::cout << "robot rot: " << robot_.get_robot_config().rotation() << std::endl;
     // x_tele = robot_configuration.translation().x;
     // y_tele = robot_configuration.translation().y;
     // theta_tele = robot_configuration.rotation();
@@ -228,6 +228,7 @@ private:
     // update the wheel configurations
     wheel_position.lw += static_cast<double>(msg->left_velocity) * motor_cmd_per_rad_sec * sim_timestep;
     wheel_position.rw += static_cast<double>(msg->right_velocity) * motor_cmd_per_rad_sec * sim_timestep;
+    // std::cout << "left wheel: " << wheel_position.lw << std::endl;
   }
 
   /// \brief Callback for the reset service.
