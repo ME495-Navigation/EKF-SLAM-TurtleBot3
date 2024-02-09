@@ -126,7 +126,7 @@ public:
     }
 
     // Initialize diff_drive class
-    robot_ = DiffDrive{track_width / 2.0, wheel_radius};
+    robot_ = DiffDrive{track_width / 2.0, wheel_radius, {0.0, 0.0}, {{x_tele, y_tele}, theta_tele}};
 
     // Set QoS settings for the Marker topic
     rclcpp::QoS qos(rclcpp::KeepLast(10));
@@ -186,6 +186,8 @@ private:
   /// \brief The timer callback
   void timer_callback()
   {
+    // std::cout << "robot x: " << robot_.get_robot_config().translation().x << std::endl;
+    // std::cout << "x tele: " << x_tele << std::endl;
     // publish the current timestep
     auto message = std_msgs::msg::UInt64();
     message.data = timer_count_;

@@ -38,6 +38,15 @@ class Odometry : public rclcpp::Node {
     std::chrono::milliseconds rate =
         std::chrono::milliseconds(int(1000.0 / timer_rate));
 
+    declare_parameter("x0", 0.0);
+    x_tele = get_parameter("x0").as_double();
+
+    declare_parameter("y0", 0.0);
+    y_tele = get_parameter("y0").as_double();
+
+    declare_parameter("theta0", 0.0);
+    theta_tele = get_parameter("theta0").as_double();
+
     declare_parameter("body_id", "");
     body_id = get_parameter("body_id").as_string();
     if (body_id.empty()) {
@@ -99,7 +108,7 @@ class Odometry : public rclcpp::Node {
     odom_msg_.child_frame_id = body_id;
 
     // Initialize diff_drive class
-    nuturtle_ = DiffDrive{track_width / 2.0, wheel_radius};
+    nuturtle_ = DiffDrive{track_width / 2.0, wheel_radius, {0.0, 0.0}, {{x_tele, y_tele}, theta_tele}};
 
     // Create timer
     timer_ =
@@ -116,6 +125,7 @@ class Odometry : public rclcpp::Node {
   nav_msgs::msg::Odometry odom_msg_;
   std::string body_id, odom_id, wheel_left, wheel_right;
   double wheel_radius, track_width;
+  double x_tele, y_tele, theta_tele;
   size_t timer_count_;
   DiffDrive nuturtle_{0.0, 0.0};
 

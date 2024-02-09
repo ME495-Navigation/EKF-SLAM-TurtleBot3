@@ -57,6 +57,7 @@
         pkg='nuturtle_control'
         exec='odometry' >
         <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+        <param from="$(find-pkg-share nusim)/config/basic_world.yaml" />  
         <param name="body_id" value = "blue/base_footprint" />
         <param name = "wheel_left" value = "left_joint" />
         <param name = "wheel_right" value = "right_joint" />
