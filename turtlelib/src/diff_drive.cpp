@@ -91,13 +91,7 @@ namespace turtlelib{
         double theta = body_twist.omega + robot_config.rotation();
         Transform2D robot_pose {{x, y}, theta};
         robot_config = robot_pose;
-
-        // Transform2D robot_pose {{body_twist.x, body_twist.y}, body_twist.omega};
-        // robot_config = robot_pose;
-
-        // // update robot configuration in the world frame
-        // robot_config *= integrate_twist(body_twist);
-
+        
         return robot_config;
     }
 

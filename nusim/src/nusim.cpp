@@ -178,7 +178,7 @@ private:
   double motor_cmd_per_rad_sec, encoder_ticks_per_rad, collision_radius;
   std::vector<double> obstacles_x{}, obstacles_y{};
   double obstacles_r, sim_timestep;
-  // WheelVelocities wheel_vels {0.0, 0.0};
+  WheelVelocities wheel_vels {0.0, 0.0};
   WheelConfig wheel_position {0.0, 0.0};
   DiffDrive robot_ {0.0, 0.0, {0.0, 0.0}, {{x_tele, y_tele}, theta_tele}};
   size_t timer_count_;
@@ -191,6 +191,7 @@ private:
     message.data = timer_count_;
     timestep_publisher_->publish(message);
     timer_count_++;
+    wheel_position_update();
     update_robot_config(wheel_position);
     sensor_data_publisher();
     transform_publisher();
@@ -206,9 +207,9 @@ private:
     // std::cout << "left wheel: " << robot_.get_wheel_config().lw << std::endl;
     // std::cout << "right wheel: " << robot_.get_wheel_config().rw << std::endl; 
     // std::cout << "robot rot: " << robot_.get_robot_config().rotation() << std::endl;
-    // x_tele = robot_configuration.translation().x;
-    // y_tele = robot_configuration.translation().y;
-    // theta_tele = robot_configuration.rotation();
+    x_tele = robot_configuration.translation().x;
+    y_tele = robot_configuration.translation().y;
+    theta_tele = robot_configuration.rotation();
   }
 
   /// \brief Sensor data publisher
@@ -221,13 +222,20 @@ private:
     sensor_data_publisher_->publish(sen_msg);
   }
 
-  /// \brief The wheel command callback
+  /// \brief Wheel position update
+  void wheel_position_update()
+  {
+    // update the wheel configurations at each timestep
+    wheel_position.lw += wheel_vels.lw * sim_timestep;
+    wheel_position.rw += wheel_vels.rw * sim_timestep;
+  }
+
+  /// \brief The wheel command callback - sets wheel velocities
   void wheel_cmd_callback(const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg)
   { 
-    // RCLCPP_ERROR_STREAM(get_logger(), "Wheel command received");
-    // update the wheel configurations
-    wheel_position.lw += static_cast<double>(msg->left_velocity) * motor_cmd_per_rad_sec * sim_timestep;
-    wheel_position.rw += static_cast<double>(msg->right_velocity) * motor_cmd_per_rad_sec * sim_timestep;
+    // update the wheel velocities
+    wheel_vels.lw = static_cast<double>(msg->left_velocity) * motor_cmd_per_rad_sec;
+    wheel_vels.rw = static_cast<double>(msg->right_velocity) * motor_cmd_per_rad_sec;
     // std::cout << "left wheel: " << wheel_position.lw << std::endl;
   }
 
