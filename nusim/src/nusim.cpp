@@ -36,6 +36,7 @@
 #include "turtlelib/diff_drive.hpp"
 
 #include "tf2_ros/transform_broadcaster.h"
+#include "tf2/LinearMath/Quaternion.h"
 
 #include "std_srvs/srv/empty.hpp"
 #include "nusim/srv/teleport.hpp"
@@ -169,6 +170,7 @@ private:
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_;
   rclcpp::Service<nusim::srv::Teleport>::SharedPtr teleport_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+  tf2::Quaternion body_quaternion;
   rclcpp::TimerBase::SharedPtr timer_;
   double x_tele, y_tele, theta_tele, reset_x, reset_y, reset_theta;
   double arena_x, arena_y, wall_thickness = 0.5;
@@ -201,10 +203,12 @@ private:
   void update_robot_config(const WheelConfig wheel)
   {
     const auto robot_configuration = robot_.forward_kinematics(wheel);
-    std::cout << robot_.get_wheel_config().lw << std::endl;
-    x_tele = robot_configuration.translation().x;
-    y_tele = robot_configuration.translation().y;
-    theta_tele = robot_configuration.rotation();
+    std::cout << "left wheel: " << robot_.get_wheel_config().lw << std::endl;
+    std::cout << "right wheel: " << robot_.get_wheel_config().rw << std::endl; 
+    std::cout << "robot rot: " << robot_.get_robot_config().rotation() << std::endl;
+    // x_tele = robot_configuration.translation().x;
+    // y_tele = robot_configuration.translation().y;
+    // theta_tele = robot_configuration.rotation();
   }
 
   /// \brief Sensor data publisher
@@ -220,7 +224,7 @@ private:
   /// \brief The wheel command callback
   void wheel_cmd_callback(const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg)
   { 
-    RCLCPP_ERROR_STREAM(get_logger(), "Wheel command received");
+    // RCLCPP_ERROR_STREAM(get_logger(), "Wheel command received");
     // update the wheel configurations
     wheel_position.lw += static_cast<double>(msg->left_velocity) * motor_cmd_per_rad_sec * sim_timestep;
     wheel_position.rw += static_cast<double>(msg->right_velocity) * motor_cmd_per_rad_sec * sim_timestep;
@@ -245,6 +249,9 @@ private:
   /// the turtlebot base footprint.
   void transform_publisher()
   {
+    // Create a quaternion to hold the rotation of the turtlebot
+    body_quaternion.setRPY(0, 0, robot_.get_robot_config().rotation());
+
     geometry_msgs::msg::TransformStamped t;
 
     t.header.stamp = this->get_clock()->now();
@@ -255,10 +262,10 @@ private:
     t.transform.translation.y = robot_.get_robot_config().translation().y;
     t.transform.translation.z = 0.0;
 
-    t.transform.rotation.x = 0.0;
-    t.transform.rotation.y = 0.0;
-    t.transform.rotation.z = robot_.get_robot_config().rotation();
-    t.transform.rotation.w = 1.0;
+    t.transform.rotation.x = body_quaternion.x();
+    t.transform.rotation.y = body_quaternion.y();
+    t.transform.rotation.z = body_quaternion.z();
+    t.transform.rotation.w = body_quaternion.w();
 
     // Send the transformation
     tf_broadcaster_->sendTransform(t);

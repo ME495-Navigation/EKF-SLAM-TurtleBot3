@@ -172,9 +172,9 @@ class TurtleControl : public rclcpp::Node {
 
     if (js_state == true) {
       // calculate delta t
-      double time_curr =
+      double time_curr = static_cast<double>(joint_state.header.stamp.sec) +
           static_cast<double>(joint_state.header.stamp.nanosec) * 1e-9;
-      double time_prev =
+      double time_prev = static_cast<double>(prev_joint_state.header.stamp.sec) +
           static_cast<double>(prev_joint_state.header.stamp.nanosec) * 1e-9;
       double dt = time_curr - time_prev;
 
