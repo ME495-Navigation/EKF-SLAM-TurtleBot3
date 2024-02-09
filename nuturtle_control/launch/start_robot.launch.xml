@@ -13,10 +13,8 @@
   don't launch rviz: false" />
 
   <!-- static transform publisher -->
-  <group if="$(eval '\'$(var robot)\' == \'localhost\'')">
-    <node pkg = "tf2_ros" exec="static_transform_publisher" 
-    args = " --frame-id nusim/world --child-frame-id odom" />
-  </group>
+  <node pkg = "tf2_ros" exec="static_transform_publisher" 
+  args = " --frame-id nusim/world --child-frame-id odom" />
 
   <!-- cmd vel publisher -->
   <group if="$(eval '\'$(var cmd_src)\' == \'teleop\'')">
@@ -37,6 +35,10 @@
     <!-- rviz will enable us to see the robot -->
     <node pkg="rviz2" exec="rviz2" args="-d $(var rviz_config)"/>
     <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
+      <arg name="color" value="blue" />
+      <arg name="use_rviz" value="false" />
+    </include>
+    <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.py">
       <arg name="color" value="red" />
       <arg name="use_rviz" value="false" />
     </include>
@@ -55,7 +57,7 @@
     <node
         pkg='nuturtle_control'
         exec='turtle_control' 
-        args = " --remap wheel_cmd:=red/wheel_cmd" >
+        args = " --remap wheel_cmd:=red/wheel_cmd --remap sensor_data:=red/sensor_data" >
         <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
     </node>
   </group>

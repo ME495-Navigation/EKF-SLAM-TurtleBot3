@@ -13,6 +13,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "tf2_ros/transform_broadcaster.h"
+#include "tf2/LinearMath/Quaternion.h"
+
 #include "turtlelib/diff_drive.hpp"
 using turtlelib::DiffDrive;
 using turtlelib::Transform2D;
@@ -110,6 +112,7 @@ class Odometry : public rclcpp::Node {
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Service<nuturtle_control::srv::InitialPose>::SharedPtr initial_pose_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> odom_tf_;
+  tf2::Quaternion body_quaternion;
   nav_msgs::msg::Odometry odom_msg_;
   std::string body_id, odom_id, wheel_left, wheel_right;
   double wheel_radius, track_width;
@@ -141,6 +144,9 @@ class Odometry : public rclcpp::Node {
     // publish the odometry message
     odom_pub_->publish(odom_msg_);
 
+    // Create a quaternion to hold the rotation of the turtlebot
+    body_quaternion.setRPY(0, 0, odom_msg_.pose.pose.orientation.z);
+
     // publish the robot's transform
     geometry_msgs::msg::TransformStamped t;
 
@@ -152,10 +158,10 @@ class Odometry : public rclcpp::Node {
     t.transform.translation.y = odom_msg_.pose.pose.position.y;
     t.transform.translation.z = 0.0;
 
-    t.transform.rotation.x = 0.0;
-    t.transform.rotation.y = 0.0;
-    t.transform.rotation.z = odom_msg_.pose.pose.orientation.z;
-    t.transform.rotation.w = 1.0;
+    t.transform.rotation.x = body_quaternion.x();
+    t.transform.rotation.y = body_quaternion.y();
+    t.transform.rotation.z = body_quaternion.z();
+    t.transform.rotation.w = body_quaternion.w();
 
     // Send the transformation
     odom_tf_->sendTransform(t);
