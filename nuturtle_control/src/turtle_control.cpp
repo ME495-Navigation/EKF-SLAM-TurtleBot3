@@ -93,7 +93,7 @@ class TurtleControl : public rclcpp::Node {
     nuturtle_ = DiffDrive{track_width / 2.0, wheel_radius};
 
     // initialize joint states for lw and rw
-    joint_state.name = {"left_wheel", "right_wheel"};
+    joint_state.name = {"wheel_left_joint", "wheel_right_joint"};
     joint_state.position = {0.0, 0.0};
     joint_state.velocity = {0.0, 0.0};
 

@@ -230,6 +230,7 @@ private:
     // update the wheel configurations at each timestep
     wheel_position.lw += wheel_vels.lw * sim_timestep;
     wheel_position.rw += wheel_vels.rw * sim_timestep;
+    // std::cout << "left wheel: " << wheel_vels.lw * sim_timestep << std::endl;
   }
 
   /// \brief The wheel command callback - sets wheel velocities

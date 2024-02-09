@@ -81,17 +81,6 @@ namespace turtlelib{
         this->wheel_config = wheel_position;
 
         // fk calculation, refer to eq in doc
-        // Twist2D body_twist;
-        // body_twist.omega =  ((wheel_vel.rw - wheel_vel.lw)*wheel_radius)/(2*half_trackwidth);
-        // body_twist.x = 0.5*wheel_radius*cos(robot_config.rotation())*(wheel_vel.rw + wheel_vel.lw);
-        // body_twist.y = 0.5*wheel_radius*sin(robot_config.rotation())*(wheel_vel.rw + wheel_vel.lw);
-
-        // double x = body_twist.x + robot_config.translation().x;
-        // double y = body_twist.y + robot_config.translation().y;
-        // double theta = body_twist.omega + robot_config.rotation();
-        // Transform2D robot_pose {{x, y}, theta};
-        // robot_config = robot_pose;
-
         Twist2D body_twist;
         body_twist.omega =  ((wheel_vel.rw - wheel_vel.lw)*wheel_radius)/(2*half_trackwidth);
         body_twist.x = 0.5*wheel_radius*(wheel_vel.rw + wheel_vel.lw);
