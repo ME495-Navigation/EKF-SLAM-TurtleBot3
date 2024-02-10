@@ -2,7 +2,7 @@
 /// \brief Simulator for the turtlebot in an rvix scene.
 ///
 /// PARAMETERS:
-///     rate (double):The frequency of simulation frame update in Hz
+///     rate (double):The frequency of simulation frame update in Hz.
 ///     x0 (double): The initial x position of the turtlebot.
 ///     y0 (double): The initial y position of the turtlebot.
 ///     theta0 (double): The initial orientation of the turtlebot.
@@ -11,11 +11,21 @@
 ///     obstacles_x (std::vector<double>): The x coordinates of the obstacles in the scene in the form of a list.
 ///     obstacles_y (std::vector<double>): The y coordinates of the obstacles in the scene in the form of a list.
 ///     obstacles_r (double): The radius of the cylindrical obstacles.
+///     wheel_radius (double): The radius of the wheels.
+///     track_width (double): The separation between the wheels.
+///     motor_cmd_max (double): The maximum value of the motor commands.
+///     motor_cmd_per_rad_sec (double): The maximum value of the motor commands per radian per second.
+///     encoder_ticks_per_rad (double): The number of encoder ticks per radian.
+///     collision_radius (double): The collision radius of the robot.
 ///
 /// PUBLISHERS:
 ///     ~/time_step (std_msgs/msg/UInt64): Publishes the current timestep.
 ///     ~/obstacles (visualization_msgs/msg/MarkerArray): Publishes the obstacles as markers to rviz.
 ///     ~/walls (visualization_msgs/msg/MarkerArray):  Publishes the walls of the arena as markers to rviz.
+///     red/sensor_data (nuturtlebot_msgs/msg//SensorData): Publishes the sensor data of the turtlebot.
+///
+/// SUBSCRIBERS:
+///    red/wheel_cmd (nuturtlebot_msgs/msg/WheelCmd): Subscribes to the wheel commands.
 ///
 /// SERVICES:
 ///     ~/reset (std_srvs/srv/Empty): Resets the state of the simulation to the starting state.
@@ -209,6 +219,7 @@ private:
   }
 
   /// \brief Updated robot config frame publisher
+  /// \param wheel The wheel config to be published
   void update_robot_config(const WheelConfig wheel)
   {
     const auto robot_configuration = robot_.forward_kinematics(wheel);
@@ -240,6 +251,7 @@ private:
   }
 
   /// \brief The wheel command callback - sets wheel velocities
+  /// \param msg The wheel command message
   void wheel_cmd_callback(const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg)
   {
     // update the wheel velocities

@@ -60,7 +60,7 @@ namespace turtlelib
     class Svg
     {
     private:
-        /// \brief output file
+        // output file
         std::ofstream outputFile;
 
     public:

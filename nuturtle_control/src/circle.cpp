@@ -1,6 +1,17 @@
 /// \file
 /// \brief A control node to drive the turtlebot along a circular arc.
 
+/// PARAMETERS:
+///     frequency (double):The frequency of the circle node timer.
+///
+/// SERVICES:
+///     control (nuturtle_control/srv/Control): Sets the linear and angular velocities of the turtlebot.
+///     reverse (std_srvs/srv/Empty): Reverses the direction of the turtlebot.
+///     stop (std_srvs/srv/Empty): Stops the motion of the turtlebot.
+///
+/// PUBLISHERS:
+///     cmd_vel (geometry_msgs/msg/Twist): The turtlebot twist command.
+
 #include <chrono>
 #include <functional>
 #include <iostream>
@@ -74,6 +85,8 @@ private:
   }
 
   /// \brief The control callback
+  /// \param req The reuest to set the linear and angular velocities of the turtlebot.
+  /// \param res Successful response boolean.
   void control_callback(
     nuturtle_control::srv::Control::Request::SharedPtr req,
     nuturtle_control::srv::Control::Response::SharedPtr res)
@@ -85,6 +98,8 @@ private:
   }
 
   /// \brief The reverse callback
+  /// \param req The reuest to reverse the direction of the turtlebot.
+  /// \param res Successful response boolean.
   void reverse_callback(
     std_srvs::srv::Empty::Request::SharedPtr,
     std_srvs::srv::Empty::Response::SharedPtr)

@@ -1,5 +1,22 @@
 /// \file
 /// \brief Control commands for the turtlebot.
+///
+/// PARAMETERS:
+///     rate (double):The frequency of the turtle_control node timer.
+///     wheel_radius (double): The radius of the wheels.
+///     track_width (double): The separation between the wheels.
+///     motor_cmd_max (double): The maximum value of the motor commands.
+///     motor_cmd_per_rad_sec (double): The maximum value of the motor commands per radian per second.
+///     encoder_ticks_per_rad (double): The number of encoder ticks per radian.
+///     collision_radius (double): The collision radius of the robot.
+///
+/// PUBLISHERS:
+///     wheel_cmd (nuturtlebot_msgs/msg/WheelCmd): Subscribes to the wheel commands.
+///    joint_states (sensor_msgs/msg/JointState): The joint states of the turtlebot.
+///
+/// SUBSCRIBERS:
+///     cmd_vel (geometry_msgs/msg//Twist): Publishes the commands of the turtelbot.
+///     red/sensor_data (nuturtlebot_msgs/msg//SensorData): Publishes the sensor data of the turtlebot.
 
 #include <chrono>
 #include <functional>

@@ -41,9 +41,9 @@ namespace turtlelib
     class Transform2D
     {
     private:
-        /// \brief Create an translation vector initialised to default values
+        // Create an translation vector initialised to default values
         Vector2D trans2d {};
-        /// \brief Create a rotation angle initialised to default values
+        // Create a rotation angle initialised to default values
         double rot2d {};
     public:
         /// \brief Create an identity transformation

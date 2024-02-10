@@ -1,7 +1,26 @@
 /// \file
 /// \brief Odometry node for the turtlebot.
-
-#include "nav_msgs/msg/odometry.hpp"
+///
+/// PARAMETERS:
+///     rate (double):The frequency of the odometry node timer.
+///     x0 (double): The initial x position of the turtlebot.
+///     y0 (double): The initial y position of the turtlebot.
+///     theta0 (double): The initial orientation of the turtlebot.
+///     body_id (string): The id of the body.
+///     odom_id (string): The id of the odom frame.
+///     wheel_left (string): The name of the left wheel.
+///     wheel_right (string): The name of the right wheel.
+///     wheel_radius (double): The radius of the wheels.
+///     track_width (double): The separation between the wheels.
+///
+/// PUBLISHERS:
+///     odom (nav_msgs/msg/Odometry): The turtlebot odometry message.
+///
+/// SUBSCRIBERS:
+///    joint_states (sensor_msgs/msg/JointState): The joint states of the turtlebot.
+///
+/// SERVICES:
+///     initial_pose (nuturtle_control/srv/InitialPose): The initial pose of the turtle.
 
 #include <chrono>
 #include <functional>
@@ -14,6 +33,7 @@
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2/LinearMath/Quaternion.h"
+#include "nav_msgs/msg/odometry.hpp"
 
 #include "turtlelib/diff_drive.hpp"
 using turtlelib::DiffDrive;
@@ -140,6 +160,7 @@ private:
 
   /// \brief Update the robot configuration and publish the odometry
   /// message/transform
+  /// \param msg The joint states message
   void joint_state_callback(const sensor_msgs::msg::JointState & msg)
   {
 
@@ -186,6 +207,8 @@ private:
   }
 
   /// \brief Callback for the initial pose service
+  /// \param req The initial pose request
+  /// \param res The successful response boolean
   void initial_pose_callback(
     nuturtle_control::srv::InitialPose::Request::SharedPtr req,
     nuturtle_control::srv::InitialPose::Response::SharedPtr res)

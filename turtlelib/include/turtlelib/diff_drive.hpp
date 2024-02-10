@@ -34,13 +34,13 @@ namespace turtlelib
     class DiffDrive
     {
     private:
-        /// \brief Create a wheel configuration initialised to default values
+        // Create a wheel configuration initialised to default values
         WheelConfig wheel_config {};
 
-        /// \brief Create a robot configuration initialised to default values
+        // Create a robot configuration initialised to default values
         Transform2D robot_config {};
 
-        /// \brief Physical dimensions of the turtlebot in m
+        // Physical dimensions of the turtlebot in m
         double half_trackwidth, wheel_radius;
 
     public:
