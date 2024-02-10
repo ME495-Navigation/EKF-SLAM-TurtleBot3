@@ -146,14 +146,13 @@ TEST_CASE("initial_pose service", "[odometry integration]") {
         rclcpp::FutureReturnCode::SUCCESS)
       {
         auto flag = result.get()->success;
-        if (flag) 
-        {
+        if (flag) {
           try {
-              t = tf_buffer_->lookupTransform(
+            t = tf_buffer_->lookupTransform(
               toFrameRel, fromFrameRel,
               tf2::TimePointZero);
-              } 
-          catch (const tf2::TransformException & ex) {}
+          } catch (const tf2::TransformException & ex) {
+          }
         }
       }
     }
@@ -162,7 +161,7 @@ TEST_CASE("initial_pose service", "[odometry integration]") {
 
   // Test assertions
   CHECK(service_found);
-    // Test assertions
+  // Test assertions
   REQUIRE(t.transform.translation.x == 1.0);
   REQUIRE(t.transform.translation.y == 2.0);
   REQUIRE(t.transform.translation.z == 0.0);
