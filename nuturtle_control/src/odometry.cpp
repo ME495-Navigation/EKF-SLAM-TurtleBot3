@@ -135,15 +135,6 @@ class Odometry : public rclcpp::Node {
   /// \brief Update the robot configuration and publish the odometry
   /// message/transform
   void joint_state_callback(const sensor_msgs::msg::JointState &msg) {
-    // use fk to update the robot's configuration
-    const auto updated_config = nuturtle_.forward_kinematics(
-        WheelConfig{msg.position.at(0), msg.position.at(1)});
-
-    // update the odometry message
-    odom_msg_.header.stamp = msg.header.stamp;
-    odom_msg_.pose.pose.position.x = updated_config.translation().x;
-    odom_msg_.pose.pose.position.y = updated_config.translation().y;
-    odom_msg_.pose.pose.orientation.z = updated_config.rotation();
 
     const auto robot_twist = nuturtle_.robot_body_twist(
         WheelConfig{msg.position.at(0), msg.position.at(1)});
@@ -153,6 +144,16 @@ class Odometry : public rclcpp::Node {
 
     // publish the odometry message
     odom_pub_->publish(odom_msg_);
+
+    // use fk to update the robot's configuration
+    const auto updated_config = nuturtle_.forward_kinematics(
+        WheelConfig{msg.position.at(0), msg.position.at(1)});
+
+    // update the odometry message
+    odom_msg_.header.stamp = msg.header.stamp;
+    odom_msg_.pose.pose.position.x = updated_config.translation().x;
+    odom_msg_.pose.pose.position.y = updated_config.translation().y;
+    odom_msg_.pose.pose.orientation.z = updated_config.rotation();
 
     // Create a quaternion to hold the rotation of the turtlebot
     body_quaternion.setRPY(0, 0, odom_msg_.pose.pose.orientation.z);
