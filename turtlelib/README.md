@@ -4,6 +4,8 @@ A library for handling transformations in SE(2) and other turtlebot-related math
 # Components
 - geometry2d - Handles 2D geometry primitives
 - se2d - Handles 2D rigid body transformations
+- svg - Handles SVG visualization
+- diff_drive - Handles differential drive kinematics
 - frame_main - Perform some rigid body computations based on user input
 
 # Conceptual Questions
