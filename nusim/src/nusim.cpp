@@ -53,6 +53,7 @@ using namespace std::chrono_literals;
 class NuSim : public rclcpp::Node
 {
 public:
+  /// \brief Constructor for the NuSim node class.
   NuSim()
   : Node("nusim"), timer_count_(0)
   {
@@ -311,11 +312,13 @@ private:
   {
     visualization_msgs::msg::MarkerArray array;
 
+    auto current_time = rclcpp::Clock().now();
+
     // loop through the walls
     for (int i = 0; i < 4; i++) {
       visualization_msgs::msg::Marker wall;
       wall.header.frame_id = "nusim/world";
-      wall.header.stamp = get_clock()->now();
+      wall.header.stamp = current_time;
       wall.id = i;
       wall.type = visualization_msgs::msg::Marker::CUBE;
       wall.action = visualization_msgs::msg::Marker::ADD;
@@ -323,9 +326,9 @@ private:
       // east and west facing walls
       if (i == 0 or i == 2) {
         if (i == 0) {
-          wall.pose.position.x = arena_x / 2 + wall_thickness / 2;
+          wall.pose.position.x = arena_x / 2.0 + wall_thickness / 2.0;
         } else {
-          wall.pose.position.x = -(arena_x / 2 + wall_thickness / 2);
+          wall.pose.position.x = -(arena_x / 2.0 + wall_thickness / 2.0);
         }
         wall.pose.position.y = 0.0;
         wall.scale.x = wall_thickness;
@@ -336,9 +339,9 @@ private:
       else {
         wall.pose.position.x = 0.0;
         if (i == 1) {
-          wall.pose.position.y = -(arena_y / 2 + wall_thickness / 2);
+          wall.pose.position.y = -(arena_y / 2.0 + wall_thickness / 2.0);
         } else {
-          wall.pose.position.y = arena_y / 2 + wall_thickness / 2;
+          wall.pose.position.y = arena_y / 2.0 + wall_thickness / 2.0;
         }
         wall.scale.x = arena_x + 2 * wall_thickness;
         wall.scale.y = wall_thickness;
@@ -366,7 +369,7 @@ private:
     visualization_msgs::msg::MarkerArray ob_array;
 
     // loop through all the obstacles in the list
-    for (long unsigned int i = 0; i < obstacles_x.size(); i++) {
+    for (size_t i = 0; i < obstacles_x.size(); i++) {
       visualization_msgs::msg::Marker ob;
       ob.header.frame_id = "nusim/world";
       ob.header.stamp = get_clock()->now();
