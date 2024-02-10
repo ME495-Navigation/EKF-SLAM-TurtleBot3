@@ -104,10 +104,11 @@ TEST_CASE("tf listener", "[odometry integration]") {
   {
     joint_pub->publish(js);
     try {
-          t = tf_buffer_->lookupTransform(
-            toFrameRel, fromFrameRel,
-            tf2::TimePointZero);
-        } catch (const tf2::TransformException & ex) {}
+      t = tf_buffer_->lookupTransform(
+        toFrameRel, fromFrameRel,
+        tf2::TimePointZero);
+    } catch (const tf2::TransformException & ex) {
+    }
     rclcpp::spin_some(node);
   }
 

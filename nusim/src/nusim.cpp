@@ -109,20 +109,23 @@ public:
     declare_parameter("motor_cmd_per_rad_sec", -1.0);
     motor_cmd_per_rad_sec = get_parameter("motor_cmd_per_rad_sec").as_double();
     if (motor_cmd_per_rad_sec < 0.0) {
-      RCLCPP_ERROR_STREAM(get_logger(),
-                          "Parameter motor_cmd_per_rad_sec was not set");
+      RCLCPP_ERROR_STREAM(
+        get_logger(),
+        "Parameter motor_cmd_per_rad_sec was not set");
     }
     declare_parameter("encoder_ticks_per_rad", -1.0);
     encoder_ticks_per_rad = get_parameter("encoder_ticks_per_rad").as_double();
     if (encoder_ticks_per_rad < 0.0) {
-      RCLCPP_ERROR_STREAM(get_logger(),
-                          "Parameter encoder_ticks_per_rad was not set");
+      RCLCPP_ERROR_STREAM(
+        get_logger(),
+        "Parameter encoder_ticks_per_rad was not set");
     }
     declare_parameter("collision_radius", -1.0);
     collision_radius = get_parameter("collision_radius").as_double();
     if (collision_radius < 0.0) {
-      RCLCPP_ERROR_STREAM(get_logger(),
-                          "Parameter collision radius was not set");
+      RCLCPP_ERROR_STREAM(
+        get_logger(),
+        "Parameter collision radius was not set");
     }
 
     // Initialize diff_drive class
@@ -141,7 +144,9 @@ public:
     arena_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/walls", qos);
     obstacle_publisher_ =
       create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", qos);
-    sensor_data_publisher_ = create_publisher<nuturtlebot_msgs::msg::SensorData>("red/sensor_data", 10);
+    sensor_data_publisher_ = create_publisher<nuturtlebot_msgs::msg::SensorData>(
+      "red/sensor_data",
+      10);
 
     // Create services
     reset_ = create_service<std_srvs::srv::Empty>(
@@ -207,7 +212,7 @@ private:
   {
     const auto robot_configuration = robot_.forward_kinematics(wheel);
     // std::cout << "left wheel: " << robot_.get_wheel_config().lw << std::endl;
-    // std::cout << "right wheel: " << robot_.get_wheel_config().rw << std::endl; 
+    // std::cout << "right wheel: " << robot_.get_wheel_config().rw << std::endl;
     // std::cout << "robot rot: " << robot_.get_robot_config().rotation() << std::endl;
     x_tele = robot_configuration.translation().x;
     y_tele = robot_configuration.translation().y;
@@ -219,8 +224,8 @@ private:
   {
     auto sen_msg = nuturtlebot_msgs::msg::SensorData();
     sen_msg.stamp = rclcpp::Clock().now();
-    sen_msg.left_encoder = (robot_.get_wheel_config().lw)*encoder_ticks_per_rad;
-    sen_msg.right_encoder = (robot_.get_wheel_config().rw)*encoder_ticks_per_rad;
+    sen_msg.left_encoder = (robot_.get_wheel_config().lw) * encoder_ticks_per_rad;
+    sen_msg.right_encoder = (robot_.get_wheel_config().rw) * encoder_ticks_per_rad;
     sensor_data_publisher_->publish(sen_msg);
   }
 
@@ -235,7 +240,7 @@ private:
 
   /// \brief The wheel command callback - sets wheel velocities
   void wheel_cmd_callback(const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg)
-  { 
+  {
     // update the wheel velocities
     wheel_vels.lw = static_cast<double>(msg->left_velocity) * motor_cmd_per_rad_sec;
     wheel_vels.rw = static_cast<double>(msg->right_velocity) * motor_cmd_per_rad_sec;

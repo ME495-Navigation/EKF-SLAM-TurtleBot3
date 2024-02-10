@@ -54,21 +54,21 @@ TEST_CASE("cmd_vel frequency", "[circle integration]") {
       service_found = true;
       auto result = client->async_send_request(request);
       if (rclcpp::spin_until_future_complete(node, result) ==
-      rclcpp::FutureReturnCode::SUCCESS)
+        rclcpp::FutureReturnCode::SUCCESS)
       {
         auto flag = result.get()->success;
         if (flag) {
-        // reset the timer count
-        timer_count = 0;
-        // wait for 100 milliseconds
-        rclcpp::Time time_now = rclcpp::Clock().now();
-        while ( rclcpp::Clock().now() < time_now + 100ms){rclcpp::spin_some(node);}
-        delta_timer = timer_count;
-      }
+          // reset the timer count
+          timer_count = 0;
+          // wait for 100 milliseconds
+          rclcpp::Time time_now = rclcpp::Clock().now();
+          while (rclcpp::Clock().now() < time_now + 100ms) {rclcpp::spin_some(node);}
+          delta_timer = timer_count;
+        }
       }
       break;
     }
   }
   CHECK(service_found);
-  REQUIRE_THAT(delta_timer, Catch::Matchers::WithinAbs(20.0,0.5));
+  REQUIRE_THAT(delta_timer, Catch::Matchers::WithinAbs(20.0, 0.5));
 }

@@ -27,16 +27,19 @@ using turtlelib::WheelVelocities;
 using namespace std::chrono_literals;
 
 /// \brief Odometry node for the turtlebot.
-class Odometry : public rclcpp::Node {
- public:
-  Odometry() : Node("odometry"), timer_count_(0) {
+class Odometry : public rclcpp::Node
+{
+public:
+  Odometry()
+  : Node("odometry"), timer_count_(0)
+  {
     // Declare parameters
     auto timer_param_desc = rcl_interfaces::msg::ParameterDescriptor{};
     timer_param_desc.description = "Timer frequency";
     declare_parameter("rate", 200.0, timer_param_desc);
     double timer_rate = get_parameter("rate").as_double();
     std::chrono::milliseconds rate =
-        std::chrono::milliseconds(int(1000.0 / timer_rate));
+      std::chrono::milliseconds(int(1000.0 / timer_rate));
 
     declare_parameter("x0", 0.0);
     x_tele = get_parameter("x0").as_double();
@@ -87,18 +90,20 @@ class Odometry : public rclcpp::Node {
 
     // Create subscribers
     joint_state_ = create_subscription<sensor_msgs::msg::JointState>(
-        "joint_states", 10,
-        std::bind(&Odometry::joint_state_callback, this,
-                  std::placeholders::_1));
+      "joint_states", 10,
+      std::bind(
+        &Odometry::joint_state_callback, this,
+        std::placeholders::_1));
 
     // Create publishers
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", 10);
 
     // Create services
     initial_pose_ = create_service<nuturtle_control::srv::InitialPose>(
-        "initial_pose",
-        std::bind(&Odometry::initial_pose_callback, this, std::placeholders::_1,
-                  std::placeholders::_2));
+      "initial_pose",
+      std::bind(
+        &Odometry::initial_pose_callback, this, std::placeholders::_1,
+        std::placeholders::_2));
 
     // Initialize the transform broadcaster
     odom_tf_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
@@ -108,14 +113,15 @@ class Odometry : public rclcpp::Node {
     odom_msg_.child_frame_id = body_id;
 
     // Initialize diff_drive class
-    nuturtle_ = DiffDrive{track_width / 2.0, wheel_radius, {0.0, 0.0}, {{x_tele, y_tele}, theta_tele}};
+    nuturtle_ =
+      DiffDrive{track_width / 2.0, wheel_radius, {0.0, 0.0}, {{x_tele, y_tele}, theta_tele}};
 
     // Create timer
     timer_ =
-        create_wall_timer(rate, std::bind(&Odometry::timer_callback, this));
+      create_wall_timer(rate, std::bind(&Odometry::timer_callback, this));
   }
 
- private:
+private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
@@ -130,14 +136,15 @@ class Odometry : public rclcpp::Node {
   DiffDrive nuturtle_{0.0, 0.0};
 
   /// \brief The timer callback
-  void timer_callback() { timer_count_++; }
+  void timer_callback() {timer_count_++;}
 
   /// \brief Update the robot configuration and publish the odometry
   /// message/transform
-  void joint_state_callback(const sensor_msgs::msg::JointState &msg) {
+  void joint_state_callback(const sensor_msgs::msg::JointState & msg)
+  {
 
     const auto robot_twist = nuturtle_.robot_body_twist(
-        WheelConfig{msg.position.at(0), msg.position.at(1)});
+      WheelConfig{msg.position.at(0), msg.position.at(1)});
     odom_msg_.twist.twist.linear.x = robot_twist.x;
     odom_msg_.twist.twist.linear.y = robot_twist.y;
     odom_msg_.twist.twist.angular.z = robot_twist.omega;
@@ -147,7 +154,7 @@ class Odometry : public rclcpp::Node {
 
     // use fk to update the robot's configuration
     const auto updated_config = nuturtle_.forward_kinematics(
-        WheelConfig{msg.position.at(0), msg.position.at(1)});
+      WheelConfig{msg.position.at(0), msg.position.at(1)});
 
     // update the odometry message
     odom_msg_.header.stamp = msg.header.stamp;
@@ -180,8 +187,9 @@ class Odometry : public rclcpp::Node {
 
   /// \brief Callback for the initial pose service
   void initial_pose_callback(
-      nuturtle_control::srv::InitialPose::Request::SharedPtr req,
-      nuturtle_control::srv::InitialPose::Response::SharedPtr res) {
+    nuturtle_control::srv::InitialPose::Request::SharedPtr req,
+    nuturtle_control::srv::InitialPose::Response::SharedPtr res)
+  {
     // update the robot's configuration to the specified initial pose
     nuturtle_.set_robot_config(Transform2D{{req->x, req->y}, req->theta});
     res->success = true;
@@ -191,7 +199,8 @@ class Odometry : public rclcpp::Node {
 /// \brief The main fucntion.
 /// \param argc
 /// \param argv
-int main(int argc, char *argv[]) {
+int main(int argc, char * argv[])
+{
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<Odometry>());
   rclcpp::shutdown();

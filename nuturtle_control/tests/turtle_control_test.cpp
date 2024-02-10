@@ -12,18 +12,20 @@
 
 using namespace std::chrono_literals;
 
-int left_velocity,right_velocity;
-double left_position,right_position;
+int left_velocity, right_velocity;
+double left_position, right_position;
 bool j_state = false;
 
 // callback for wheel command subscriber
 void wheel_cmd_callback(
-    const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg) {
+  const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg)
+{
   left_velocity = msg->left_velocity;
   right_velocity = msg->right_velocity;
 }
 
-void joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg) {
+void joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg)
+{
   left_position = msg->position.at(0);
   right_position = msg->position.at(1);
   j_state = true;
@@ -37,12 +39,12 @@ TEST_CASE("pure translation", "[turtle control integration]") {
 
   // create publishers
   auto cmd_vel_pub =
-      node->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
+    node->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
 
   // create subscribers
   auto wheel_cmd =
-      node->create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
-          "wheel_cmd", 10, &wheel_cmd_callback);
+    node->create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
+    "wheel_cmd", 10, &wheel_cmd_callback);
 
   // create twist message
   geometry_msgs::msg::Twist twist;
@@ -53,14 +55,15 @@ TEST_CASE("pure translation", "[turtle control integration]") {
   // This line will cause a runtime error if a value
   // for the "test_duration" parameter is not passed to the node
   const auto TEST_DURATION =
-      node->get_parameter("test_duration").get_parameter_value().get<double>();
+    node->get_parameter("test_duration").get_parameter_value().get<double>();
 
   rclcpp::Time start_time = rclcpp::Clock().now();
 
   // Keep test running only for the length of the "test_duration" parameter
   // (in seconds)
   while (rclcpp::ok() && ((rclcpp::Clock().now() - start_time) <
-                          rclcpp::Duration::from_seconds(TEST_DURATION))) {
+    rclcpp::Duration::from_seconds(TEST_DURATION)))
+  {
     cmd_vel_pub->publish(twist);
     rclcpp::spin_some(node);
   }
@@ -77,12 +80,12 @@ TEST_CASE("pure rotation", "[turtle control integration]") {
 
   // create publishers
   auto cmd_vel_pub =
-      node->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
+    node->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
 
   // create subscribers
   auto wheel_cmd =
-      node->create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
-          "wheel_cmd", 10, &wheel_cmd_callback);
+    node->create_subscription<nuturtlebot_msgs::msg::WheelCommands>(
+    "wheel_cmd", 10, &wheel_cmd_callback);
 
   // create twist message
   geometry_msgs::msg::Twist twist;
@@ -93,14 +96,15 @@ TEST_CASE("pure rotation", "[turtle control integration]") {
   // This line will cause a runtime error if a value
   // for the "test_duration" parameter is not passed to the node
   const auto TEST_DURATION =
-      node->get_parameter("test_duration").get_parameter_value().get<double>();
+    node->get_parameter("test_duration").get_parameter_value().get<double>();
 
   rclcpp::Time start_time = rclcpp::Clock().now();
 
   // Keep test running only for the length of the "test_duration" parameter
   // (in seconds)
   while (rclcpp::ok() && ((rclcpp::Clock().now() - start_time) <
-                          rclcpp::Duration::from_seconds(TEST_DURATION))) {
+    rclcpp::Duration::from_seconds(TEST_DURATION)))
+  {
     cmd_vel_pub->publish(twist);
     rclcpp::spin_some(node);
   }
@@ -114,12 +118,12 @@ TEST_CASE("sensor data to joint states", "[turtle control integration]") {
 
   // create publishers
   auto sensor_data_pub_ =
-      node->create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data", 10);
+    node->create_publisher<nuturtlebot_msgs::msg::SensorData>("sensor_data", 10);
 
   // create subscribers
   auto js =
-      node->create_subscription<sensor_msgs::msg::JointState>(
-          "joint_states", 10, &joint_state_callback);
+    node->create_subscription<sensor_msgs::msg::JointState>(
+    "joint_states", 10, &joint_state_callback);
 
   // create sensor data message
   nuturtlebot_msgs::msg::SensorData sensor_data;
@@ -136,6 +140,6 @@ TEST_CASE("sensor data to joint states", "[turtle control integration]") {
     rclcpp::spin_some(node);
   }
   // Test assertions - check that the dummy node was found
- REQUIRE_THAT(left_position , Catch::Matchers::WithinAbs(1.53398, 0.01));
- REQUIRE_THAT(right_position, Catch::Matchers::WithinAbs(1.53398, 0.01));
+  REQUIRE_THAT(left_position, Catch::Matchers::WithinAbs(1.53398, 0.01));
+  REQUIRE_THAT(right_position, Catch::Matchers::WithinAbs(1.53398, 0.01));
 };
