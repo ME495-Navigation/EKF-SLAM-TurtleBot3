@@ -3,6 +3,7 @@ Worked with:
 2. Shail Dalal
 3. Rahul Roy
 4. Ananya Agarwal
+5. Aditya Nair
 
 Borrowed tests:
 1. TEST_CASE("inv() Transform" "[se2d]") // Rahul,Roy
@@ -14,7 +15,9 @@ Borrowed tests:
 7. TEST_CASE("operator()(Twist2D t)","[transform]") // Srikanth,Schelbert
 
 Other citations:
-1. https://husarion.com/tutorials/ros2-tutorials/3-creating-nodes-services/ - ROS2 C++ nodes and services
-2. https://github.com/ros2/rosidl/issues/441#issuecomment-591025515 - Custom srv interface syntax
-3. https://chat.openai.com/share/67d0fd02-a340-4484-8b6c-03c78914dce8 - ChatGpt questions relating to C++
-4. https://chat.openai.com/share/690036f2-d4cb-47af-8fa4-52ccb47e2737 - ChatGpt questions relating to ROS
+[1] https://husarion.com/tutorials/ros2-tutorials/3-creating-nodes-services/ - ROS2 C++ nodes and services
+[2] https://github.com/ros2/rosidl/issues/441#issuecomment-591025515 - Custom srv interface syntax
+[3] https://chat.openai.com/share/9d682a60-987a-4a2a-bfc7-f46b2d61e68d - ChatGpt questions relating to C++
+[4] https://chat.openai.com/share/8f5ee674-6163-4c34-8632-4dabec927c3e - ChatGpt questions relating to ROS
+[5] Aditya Nair [helped fix erroneous forward kinematics math implementation]
+[6] https://github.com/katie-hughes/ekf-slam-turtlebot/blob/main/turtlelib/src/diff_drive.cpp - Referenced fk math to try and fix error, did not use in implementation
