@@ -26,3 +26,12 @@ Task C.6
 Task C.7
 Task D.1
 Task D.2
+Task D.3
+Task E.1
+Task E.2
+Task E.3
+Task E.4
+Task E.5
+Task F.1
+Task F.2
+Task F.3
