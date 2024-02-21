@@ -186,6 +186,7 @@ public:
 
     // wheel velocity distribution
     wheel_vel_db = std::normal_distribution<>(0.0, input_noise);
+    wheel_pos_db = std::uniform_real_distribution<>(-slip_fraction, slip_fraction);
 
     // Create services
     reset_ = create_service<std_srvs::srv::Empty>(
@@ -226,10 +227,12 @@ private:
   std::vector<double> obstacles_x{}, obstacles_y{};
   double obstacles_r, sim_timestep;
   WheelVelocities wheel_vels {0.0, 0.0};
-  WheelConfig wheel_position {0.0, 0.0};
+  WheelConfig wheel_position_actual {0.0, 0.0};
+  WheelConfig wheel_position_sim {0.0, 0.0};
   DiffDrive robot_ {0.0, 0.0, {0.0, 0.0}, {{x_tele, y_tele}, theta_tele}};
   size_t timer_count_;
   std::normal_distribution<double> wheel_vel_db;
+  std::uniform_real_distribution<double> wheel_pos_db;
 
   /// \brief The timer callback
   void timer_callback()
@@ -241,8 +244,9 @@ private:
     message.data = timer_count_;
     timestep_publisher_->publish(message);
     timer_count_++;
-    wheel_position_update();
-    update_robot_config(wheel_position);
+    wheel_position_actual_update();
+    wheel_position_sim_update();
+    update_robot_config(wheel_position_actual);
     sensor_data_publisher();
     transform_publisher();
     path_publisher();
@@ -266,17 +270,25 @@ private:
   {
     auto sen_msg = nuturtlebot_msgs::msg::SensorData();
     sen_msg.stamp = rclcpp::Clock().now();
-    sen_msg.left_encoder = (robot_.get_wheel_config().lw) * encoder_ticks_per_rad;
-    sen_msg.right_encoder = (robot_.get_wheel_config().rw) * encoder_ticks_per_rad;
+    sen_msg.left_encoder = wheel_position_sim.lw * encoder_ticks_per_rad;
+    sen_msg.right_encoder = wheel_position_sim.rw * encoder_ticks_per_rad;
     sensor_data_publisher_->publish(sen_msg);
   }
 
-  /// \brief Wheel position update
-  void wheel_position_update()
+  /// \brief Actual wheel position update
+  void wheel_position_actual_update()
+  {
+    // update the wheel configurations at each timestep with noise
+    wheel_position_actual.lw += wheel_vels.lw * (1 + wheel_pos_db(get_random())) * sim_timestep;
+    wheel_position_actual.rw += wheel_vels.rw * (1 + wheel_pos_db(get_random())) * sim_timestep;
+  }
+
+  /// \brief Sim wheel position update
+  void wheel_position_sim_update()
   {
     // update the wheel configurations at each timestep
-    wheel_position.lw += wheel_vels.lw * sim_timestep;
-    wheel_position.rw += wheel_vels.rw * sim_timestep;
+    wheel_position_sim.lw += wheel_vels.lw * sim_timestep;
+    wheel_position_sim.rw += wheel_vels.rw * sim_timestep;
   }
 
   /// \brief The wheel command callback - sets wheel velocities
