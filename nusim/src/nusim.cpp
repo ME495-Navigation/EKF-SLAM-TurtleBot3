@@ -23,6 +23,7 @@
 ///     ~/obstacles (visualization_msgs/msg/MarkerArray): Publishes the obstacles as markers to rviz.
 ///     ~/walls (visualization_msgs/msg/MarkerArray):  Publishes the walls of the arena as markers to rviz.
 ///     red/sensor_data (nuturtlebot_msgs/msg//SensorData): Publishes the sensor data of the turtlebot.
+///     red/path (nav_msgs/msg/Path): Publishes the path of the turtlebot.
 ///
 /// SUBSCRIBERS:
 ///    red/wheel_cmd (nuturtlebot_msgs/msg/WheelCmd): Subscribes to the wheel commands.
@@ -36,6 +37,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <random>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -61,6 +63,18 @@ using turtlelib::WheelVelocities;
 using turtlelib::Transform2D;
 
 using namespace std::chrono_literals;
+
+
+/// \brief A random number generator 
+std::mt19937 & get_random()
+{
+    // static variables inside a function are created once and persist for the remainder of the program
+    static std::random_device rd{}; 
+    static std::mt19937 mt{rd()};
+    // we return a reference to the pseudo-random number genrator object. This is always the
+    // same object every time get_random is called
+    return mt;
+}
 
 /// \brief Turtlebot simulator.
 class NuSim : public rclcpp::Node
@@ -141,6 +155,10 @@ public:
         get_logger(),
         "Parameter collision radius was not set");
     }
+    declare_parameter("input_noise", 0.0);
+    input_noise = get_parameter("input_noise").as_double();
+    declare_parameter("slip_fraction", 0.0);
+    slip_fraction = get_parameter("slip_fraction").as_double();
 
     // Initialize diff_drive class
     robot_ = DiffDrive{track_width / 2.0, wheel_radius, {0.0, 0.0}, {{x_tele, y_tele}, theta_tele}};
@@ -165,6 +183,9 @@ public:
     //create a path publisher
     path_publisher_ = create_publisher<nav_msgs::msg::Path>("red/path", 10);
     path_msg.header.frame_id = "nusim/world";
+
+    // wheel velocity distribution
+    wheel_vel_db = std::normal_distribution<>(0.0, input_noise);
 
     // Create services
     reset_ = create_service<std_srvs::srv::Empty>(
@@ -201,12 +222,14 @@ private:
   double arena_x, arena_y, wall_thickness = 0.5;
   double wheel_radius, track_width, motor_cmd_max;
   double motor_cmd_per_rad_sec, encoder_ticks_per_rad, collision_radius;
+  double input_noise, slip_fraction;
   std::vector<double> obstacles_x{}, obstacles_y{};
   double obstacles_r, sim_timestep;
   WheelVelocities wheel_vels {0.0, 0.0};
   WheelConfig wheel_position {0.0, 0.0};
   DiffDrive robot_ {0.0, 0.0, {0.0, 0.0}, {{x_tele, y_tele}, theta_tele}};
   size_t timer_count_;
+  std::normal_distribution<double> wheel_vel_db;
 
   /// \brief The timer callback
   void timer_callback()
@@ -233,9 +256,6 @@ private:
   void update_robot_config(const WheelConfig wheel)
   {
     const auto robot_configuration = robot_.forward_kinematics(wheel);
-    // std::cout << "left wheel: " << robot_.get_wheel_config().lw << std::endl;
-    // std::cout << "right wheel: " << robot_.get_wheel_config().rw << std::endl;
-    // std::cout << "robot rot: " << robot_.get_robot_config().rotation() << std::endl;
     x_tele = robot_configuration.translation().x;
     y_tele = robot_configuration.translation().y;
     theta_tele = robot_configuration.rotation();
@@ -257,7 +277,6 @@ private:
     // update the wheel configurations at each timestep
     wheel_position.lw += wheel_vels.lw * sim_timestep;
     wheel_position.rw += wheel_vels.rw * sim_timestep;
-    // std::cout << "left wheel: " << wheel_vels.lw * sim_timestep << std::endl;
   }
 
   /// \brief The wheel command callback - sets wheel velocities
@@ -267,7 +286,19 @@ private:
     // update the wheel velocities
     wheel_vels.lw = static_cast<double>(msg->left_velocity) * motor_cmd_per_rad_sec;
     wheel_vels.rw = static_cast<double>(msg->right_velocity) * motor_cmd_per_rad_sec;
-    // std::cout << "left wheel: " << wheel_position.lw << std::endl;
+    add_noise();
+  }
+
+  /// \brief Adds noise to the wheel velocities
+  void add_noise(){
+    // define gaussian noise with variance of input_noise
+    if (wheel_vels.lw != 0.0 or wheel_vels.rw != 0.0) {
+      if (input_noise > 0.0) {
+        // RCLCPP_INFO_STREAM(get_logger(), "Adding noise to the wheel velocities");
+        wheel_vels.lw += wheel_vel_db(get_random());
+        wheel_vels.rw += wheel_vel_db(get_random());
+      }
+    }     
   }
 
   /// \brief Callback for the reset service.
@@ -311,6 +342,7 @@ private:
     tf_broadcaster_->sendTransform(t);
   }
 
+  /// \brief Publishes the path of the turtlebot
   void path_publisher()
   {
     path_msg.header.stamp = this->get_clock()->now();
