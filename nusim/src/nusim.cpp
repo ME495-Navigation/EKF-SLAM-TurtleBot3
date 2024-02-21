@@ -44,6 +44,9 @@
 #include "nuturtlebot_msgs/msg/wheel_commands.hpp"
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
 #include "turtlelib/diff_drive.hpp"
+#include "nav_msgs/msg/path.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
 
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2/LinearMath/Quaternion.h"
@@ -158,6 +161,10 @@ public:
     sensor_data_publisher_ = create_publisher<nuturtlebot_msgs::msg::SensorData>(
       "red/sensor_data",
       10);
+    
+    //create a path publisher
+    path_publisher_ = create_publisher<nav_msgs::msg::Path>("red/path", 10);
+    path_msg.header.frame_id = "nusim/world";
 
     // Create services
     reset_ = create_service<std_srvs::srv::Empty>(
@@ -183,11 +190,13 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr arena_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacle_publisher_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_publisher_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_publisher_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_;
   rclcpp::Service<nusim::srv::Teleport>::SharedPtr teleport_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   tf2::Quaternion body_quaternion;
   rclcpp::TimerBase::SharedPtr timer_;
+  nav_msgs::msg::Path path_msg;
   double x_tele, y_tele, theta_tele, reset_x, reset_y, reset_theta;
   double arena_x, arena_y, wall_thickness = 0.5;
   double wheel_radius, track_width, motor_cmd_max;
@@ -213,6 +222,7 @@ private:
     update_robot_config(wheel_position);
     sensor_data_publisher();
     transform_publisher();
+    path_publisher();
     // publish walls and obstacles
     walls_publisher();
     obstacles_publisher();
@@ -299,6 +309,27 @@ private:
 
     // Send the transformation
     tf_broadcaster_->sendTransform(t);
+  }
+
+  void path_publisher()
+  {
+    path_msg.header.stamp = this->get_clock()->now();
+    geometry_msgs::msg::PoseStamped pose_stamp;
+    pose_stamp.header.stamp = this->get_clock()->now();
+    pose_stamp.header.frame_id = "nusim/world";
+    pose_stamp.pose.position.x = robot_.get_robot_config().translation().x;
+    pose_stamp.pose.position.y = robot_.get_robot_config().translation().y;
+    pose_stamp.pose.position.z = 0.0;
+
+    // Create a quaternion to hold the rotation of the turtlebot
+    body_quaternion.setRPY(0, 0, robot_.get_robot_config().rotation());
+    pose_stamp.pose.orientation.x = body_quaternion.x();
+    pose_stamp.pose.orientation.y = body_quaternion.y();
+    pose_stamp.pose.orientation.z = body_quaternion.z();
+    pose_stamp.pose.orientation.w = body_quaternion.w();
+
+    path_msg.poses.push_back(pose_stamp);
+    path_publisher_->publish(path_msg);
   }
 
   ///\brief Callback for the teleport service.
