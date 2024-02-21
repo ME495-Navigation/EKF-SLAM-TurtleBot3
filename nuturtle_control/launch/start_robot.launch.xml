@@ -87,6 +87,9 @@
     <!-- static transform publisher -->
     <node pkg = "tf2_ros" exec="static_transform_publisher" 
     args = " --frame-id nusim/world --child-frame-id odom" />
+    <include file="$(find-pkg-share hls_lfcd_lds_driver)/launch/hlds_laser.launch.py">
+      <arg name="port" value="/dev/ttyUSB0" />
+    </include>
   </group>
 
   <group if="$(eval '\'$(var robot)\' == \'none\' and \'$(var use_rviz)\' == \'true\'')">
