@@ -43,7 +43,9 @@
       <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
       <param from="$(find-pkg-share nusim)/config/basic_world.yaml" />
       <param name="input_noise" value="0.0" />
-      <param name="slip_fraction" value="1.0" />        
+      <param name="slip_fraction" value="1.0" />
+      <param name="basic_sensor_variance" value="0.02" />
+      <param name="max_range" value="0.4" />        
     </node>
     <node
         pkg='nuturtle_control'

@@ -159,6 +159,10 @@ public:
     input_noise = get_parameter("input_noise").as_double();
     declare_parameter("slip_fraction", 0.0);
     slip_fraction = get_parameter("slip_fraction").as_double();
+    declare_parameter("basic_sensor_variance", 0.0);
+    basic_sensor_variance = get_parameter("basic_sensor_variance").as_double();
+    declare_parameter("max_range", 0.0);
+    max_range = get_parameter("max_range").as_double();
 
     // Initialize diff_drive class
     robot_ = DiffDrive{track_width / 2.0, wheel_radius, {0.0, 0.0}, {{x_tele, y_tele}, theta_tele}};
@@ -176,6 +180,8 @@ public:
     arena_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/walls", qos);
     obstacle_publisher_ =
       create_publisher<visualization_msgs::msg::MarkerArray>("~/obstacles", qos);
+    fake_sensor_obs_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>(
+      "/fake_sensor", qos);
     sensor_data_publisher_ = create_publisher<nuturtlebot_msgs::msg::SensorData>(
       "red/sensor_data",
       10);
@@ -184,9 +190,10 @@ public:
     path_publisher_ = create_publisher<nav_msgs::msg::Path>("red/path", 10);
     path_msg.header.frame_id = "nusim/world";
 
-    // wheel velocity distribution
+    // pb distribution functions
     wheel_vel_db = std::normal_distribution<>(0.0, input_noise);
     wheel_pos_db = std::uniform_real_distribution<>(-slip_fraction, slip_fraction);
+    fake_obs_db = std::normal_distribution<>(0.0, basic_sensor_variance);
 
     // Create services
     reset_ = create_service<std_srvs::srv::Empty>(
@@ -201,6 +208,10 @@ public:
     tf_broadcaster_ =
       std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
+    // create marker array publishing timer
+    marker_timer_ = create_wall_timer(
+      200ms, std::bind(&NuSim::marker_timer_callback, this));
+
     // Create timer
     timer_ = create_wall_timer(
       rate, std::bind(&NuSim::timer_callback, this));
@@ -211,19 +222,21 @@ private:
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr timestep_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr arena_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obstacle_publisher_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr fake_sensor_obs_publisher_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_publisher_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_publisher_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_;
   rclcpp::Service<nusim::srv::Teleport>::SharedPtr teleport_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
-  tf2::Quaternion body_quaternion;
+  rclcpp::TimerBase::SharedPtr marker_timer_;
   rclcpp::TimerBase::SharedPtr timer_;
+  tf2::Quaternion body_quaternion;
   nav_msgs::msg::Path path_msg;
   double x_tele, y_tele, theta_tele, reset_x, reset_y, reset_theta;
   double arena_x, arena_y, wall_thickness = 0.5;
   double wheel_radius, track_width, motor_cmd_max;
   double motor_cmd_per_rad_sec, encoder_ticks_per_rad, collision_radius;
-  double input_noise, slip_fraction;
+  double input_noise, slip_fraction, basic_sensor_variance, max_range;
   std::vector<double> obstacles_x{}, obstacles_y{};
   double obstacles_r, sim_timestep;
   WheelVelocities wheel_vels {0.0, 0.0};
@@ -232,6 +245,7 @@ private:
   DiffDrive robot_ {0.0, 0.0, {0.0, 0.0}, {{x_tele, y_tele}, theta_tele}};
   size_t timer_count_;
   std::normal_distribution<double> wheel_vel_db;
+  std::normal_distribution<double> fake_obs_db;
   std::uniform_real_distribution<double> wheel_pos_db;
 
   /// \brief The timer callback
@@ -253,6 +267,12 @@ private:
     // publish walls and obstacles
     walls_publisher();
     obstacles_publisher();
+  }
+
+  /// \brief The marker timer callback
+  void marker_timer_callback()
+  {
+    fake_sensor_marker_publisher();
   }
 
   /// \brief Updated robot config frame publisher
@@ -298,11 +318,11 @@ private:
     // update the wheel velocities
     wheel_vels.lw = static_cast<double>(msg->left_velocity) * motor_cmd_per_rad_sec;
     wheel_vels.rw = static_cast<double>(msg->right_velocity) * motor_cmd_per_rad_sec;
-    add_noise();
+    add_wheel_vel_noise();
   }
 
   /// \brief Adds noise to the wheel velocities
-  void add_noise(){
+  void add_wheel_vel_noise(){
     // define gaussian noise with variance of input_noise
     if (wheel_vels.lw != 0.0 or wheel_vels.rw != 0.0) {
       if (input_noise > 0.0) {
@@ -337,7 +357,7 @@ private:
 
     geometry_msgs::msg::TransformStamped t;
 
-    t.header.stamp = this->get_clock()->now();
+    t.header.stamp = rclcpp::Clock().now();
     t.header.frame_id = "nusim/world";
     t.child_frame_id = "red/base_footprint";
 
@@ -357,9 +377,9 @@ private:
   /// \brief Publishes the path of the turtlebot
   void path_publisher()
   {
-    path_msg.header.stamp = this->get_clock()->now();
+    path_msg.header.stamp = rclcpp::Clock().now();
     geometry_msgs::msg::PoseStamped pose_stamp;
-    pose_stamp.header.stamp = this->get_clock()->now();
+    pose_stamp.header.stamp = rclcpp::Clock().now();
     pose_stamp.header.frame_id = "nusim/world";
     pose_stamp.pose.position.x = robot_.get_robot_config().translation().x;
     pose_stamp.pose.position.y = robot_.get_robot_config().translation().y;
@@ -459,7 +479,7 @@ private:
     for (size_t i = 0; i < obstacles_x.size(); i++) {
       visualization_msgs::msg::Marker ob;
       ob.header.frame_id = "nusim/world";
-      ob.header.stamp = get_clock()->now();
+      ob.header.stamp = rclcpp::Clock().now();
       ob.id = i;
       ob.type = visualization_msgs::msg::Marker::CYLINDER;
       ob.action = visualization_msgs::msg::Marker::ADD;
@@ -480,6 +500,61 @@ private:
       ob_array.markers.push_back(ob);
     }
     obstacle_publisher_->publish(ob_array);
+  }
+
+  /// \brief Fake sensor marker publisher.
+  void fake_sensor_marker_publisher()
+  {
+    if (obstacles_x.size() != obstacles_y.size()) {
+      throw std::runtime_error("x and y coordinate lists are not the same size.");
+    }
+    visualization_msgs::msg::MarkerArray fake_ob_array;
+
+    // loop through all the obstacles in the list
+    for (size_t i = 0; i < obstacles_x.size(); i++) {
+      visualization_msgs::msg::Marker fake_ob;
+      fake_ob.header.frame_id = "nusim/world";
+      fake_ob.header.stamp = rclcpp::Clock().now();
+      fake_ob.id = i;
+      fake_ob.type = visualization_msgs::msg::Marker::CYLINDER;
+      fake_ob.pose.position.x = obstacles_x.at(i) + fake_obs_db(get_random());
+      fake_ob.pose.position.y = obstacles_y.at(i) + fake_obs_db(get_random());
+      fake_ob.pose.position.z = 0.25 / 2.0;
+      fake_ob.pose.orientation.x = 0.0;
+      fake_ob.pose.orientation.y = 0.0;
+      fake_ob.pose.orientation.z = 0.0;
+      fake_ob.pose.orientation.w = 1.0;
+      fake_ob.scale.x = obstacles_r * 2.0;
+      fake_ob.scale.y = obstacles_r * 2.0;
+      fake_ob.scale.z = 0.25;
+      // set color yellow
+      fake_ob.color.r = 1.0;
+      fake_ob.color.g = 1.0;
+      fake_ob.color.b = 0.0;
+      fake_ob.color.a = 0.5;
+      fake_ob.action = visualization_msgs::msg::Marker::ADD;
+      
+      if (distance(x_tele, y_tele, fake_ob.pose.position.x, fake_ob.pose.position.y) > max_range) {
+        fake_ob.action = visualization_msgs::msg::Marker::DELETE;
+      } 
+      else {
+        fake_ob.action = visualization_msgs::msg::Marker::ADD;
+      }
+
+      fake_ob_array.markers.push_back(fake_ob);
+    }
+    fake_sensor_obs_publisher_->publish(fake_ob_array);
+  }
+
+  /// \brief Calculate the distance between two points
+  /// \param x1 The x coordinate of the first point
+  /// \param y1 The y coordinate of the first point
+  /// \param x2 The x coordinate of the second point
+  /// \param y2 The y coordinate of the second point
+  /// \return The distance between the two points
+  double distance(double x1, double y1, double x2, double y2)
+  {
+    return std::sqrt(std::pow(x2 - x1, 2) + std::pow(y2 - y1, 2));
   }
 };
 
