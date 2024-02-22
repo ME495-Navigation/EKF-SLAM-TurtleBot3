@@ -17,6 +17,10 @@
 ///     motor_cmd_per_rad_sec (double): The maximum value of the motor commands per radian per second.
 ///     encoder_ticks_per_rad (double): The number of encoder ticks per radian.
 ///     collision_radius (double): The collision radius of the robot.
+///     input_noise (double): The noise to be added to the wheel velocities.
+///     slip_fraction (double): The fraction of slip in the wheels.
+///     basic_sensor_variance (double): The basic sensor variance.
+///     max_range (double): The maximum range of the laser sensor.
 ///
 /// PUBLISHERS:
 ///     ~/time_step (std_msgs/msg/UInt64): Publishes the current timestep.
@@ -247,6 +251,7 @@ private:
   std::normal_distribution<double> wheel_vel_db;
   std::normal_distribution<double> fake_obs_db;
   std::uniform_real_distribution<double> wheel_pos_db;
+  int col_detect_index;
 
   /// \brief The timer callback
   void timer_callback()
@@ -261,6 +266,11 @@ private:
     wheel_position_actual_update();
     wheel_position_sim_update();
     update_robot_config(wheel_position_actual);
+    // detect collision
+    col_detect_index = detect_collision();
+    if (col_detect_index != -1) {
+      update_robot_config_post_collision(col_detect_index);
+    }
     sensor_data_publisher();
     transform_publisher();
     path_publisher();
@@ -284,6 +294,45 @@ private:
     y_tele = robot_configuration.translation().y;
     theta_tele = robot_configuration.rotation();
   }
+
+  /// \brief Detect collision with the obstacles
+  int detect_collision()
+  {
+    for (size_t i = 0; i < obstacles_x.size(); i++) {
+      if (distance(x_tele, y_tele, obstacles_x.at(i), obstacles_y.at(i)) < collision_radius + obstacles_r) {
+        // return the index of the obstacle that the robot has collided with
+        return static_cast<int>(i);
+      }
+    }
+    return -1;    
+  }
+
+  /// \brief Update the robot configuration post collision
+  void update_robot_config_post_collision(int i)
+  {
+    // update the robot configuration post collision
+    double m, del_x, del_y, dist;
+    m = (y_tele - obstacles_y.at(i)) / (x_tele - obstacles_x.at(i));
+    // b = y_tele - m * x_tele;
+
+    dist = collision_radius + obstacles_r;
+
+    // calculate distance to move the robot along the line
+    // input negative distance depending on the direction along the line
+    if (x_tele > obstacles_x.at(i)) {
+      del_x = dist / std::sqrt(1 + std::pow(m, 2));
+      del_y = m * del_x;
+    } else {
+      del_x = -dist / std::sqrt(1 + std::pow(m, 2));
+      del_y = m * del_x;
+    }
+
+    // update the robot configuration
+    Transform2D robot_pose {{obstacles_x.at(i) + del_x, obstacles_y.at(i) + del_y}, theta_tele};
+    robot_.set_robot_config(robot_pose);
+    x_tele = robot_pose.translation().x;
+    y_tele = robot_pose.translation().y;
+  }  
 
   /// \brief Sensor data publisher
   void sensor_data_publisher()
