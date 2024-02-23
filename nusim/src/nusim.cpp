@@ -653,7 +653,11 @@ private:
       std::vector<double> intersection_points = lidar_obstacle_intersection(x_start, y_start, x_end, y_end);
       if (intersection_points.size() >= 2) {
         double range = distance(x_start, y_start, intersection_points.at(0), intersection_points.at(1));
-        // range += lidar_db(get_random());
+        range += lidar_db(get_random());
+        // limit resolution of the lidar scan
+        if (lidar_resolution > 0.0) {
+          range = std::round(range / lidar_resolution) * lidar_resolution;
+        }
         lidar_scan.ranges.push_back(range);   
       }
       else {
