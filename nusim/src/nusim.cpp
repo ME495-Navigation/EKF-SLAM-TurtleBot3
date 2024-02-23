@@ -277,6 +277,7 @@ private:
   std::normal_distribution<double> lidar_db;
   std::uniform_real_distribution<double> wheel_pos_db;
   int col_detect_index;
+  Transform2D base_lidar_transform {{-0.032, 0.0}, 0.0};
 
   /// \brief The timer callback
   void timer_callback()
@@ -625,13 +626,94 @@ private:
   void lidar_scan_publisher()
   {
     sensor_msgs::msg::LaserScan lidar_scan;
-    lidar_scan.header.frame_id = "nusim/base_scan";
+    lidar_scan.header.frame_id = "red/base_scan";
     lidar_scan.header.stamp = rclcpp::Clock().now();
     lidar_scan.angle_min = lidar_angle_min;
     lidar_scan.angle_max = lidar_angle_max;
     lidar_scan.angle_increment = lidar_angle_increment;
     lidar_scan.range_min = lidar_range_min;
     lidar_scan.range_max = lidar_range_max;
+
+    // loop through each lidar laser ray
+    for (double i = lidar_scan.angle_min; i < lidar_scan.angle_max; i += lidar_scan.angle_increment) {
+      double x_start = x_tele + base_lidar_transform.translation().x;
+      double y_start = y_tele + base_lidar_transform.translation().y;
+      double theta = theta_tele + base_lidar_transform.rotation();
+      double x_end = x_start + lidar_range_max * std::cos(theta + i);
+      double y_end = y_start + lidar_range_max * std::sin(theta + i);
+      std::vector<double> intersection_points = lidar_obstacle_intersection(x_start, y_start, x_end, y_end);
+      if (intersection_points.size() > 0) {
+        double range = distance(x_start, y_start, intersection_points.at(0), intersection_points.at(1));
+        range += lidar_db(get_random());
+        lidar_scan.ranges.push_back(range);   
+      }
+      else {
+        lidar_scan.ranges.push_back(0.0);
+      }
+    }
+    lidar_publisher_->publish(lidar_scan);
+  }
+
+  /// \brief Check for intersection of lidar scan and cylindrical obstacles
+  /// \param x_start The x coordinate of the start of the lidar scan
+  /// \param y_start The y coordinate of the start of the lidar scan
+  /// \param x_end The x coordinate of the end of the lidar scan
+  /// \param y_end The y coordinate of the end of the lidar scan
+  std::vector<double> lidar_obstacle_intersection(double x_start, double y_start, double x_end, double y_end)
+  {
+    std::vector<double> intersection_points;
+    double m, b, cx, cy;
+    for (size_t i = 0; i < obstacles_x.size(); i++) {
+      // calculate the line equation
+      m = (y_end - y_start) / (x_end - x_start);
+      b = y_start - m * x_start;
+      // calculate the center of the obstacle
+      cx = obstacles_x.at(i);
+      cy = obstacles_y.at(i);
+      // calculate the perpendicular distance from the center of the obstacle to the line
+      double p_dist = std::abs(m * cx - cy + b) / std::sqrt(std::pow(m, 2) + 1);
+      // check if the perpendicular distance is less than the radius of the obstacle
+      if (p_dist <= obstacles_r) {
+        // calculate the coordinates of the perpendicular line intersection
+        double x_int = (cx + m * cy - m * b) / (1 + std::pow(m, 2));
+        double y_int = m * x_int + b;
+        // check if the intersection point is within the line segment
+        if (x_int < std::max(x_start, x_end) and x_int > std::min(x_start, x_end) and
+          y_int < std::max(y_start, y_end) and y_int > std::min(y_start, y_end)) {  
+          // calculate the distance from the perpendicular line intersection to the intersection points
+          double d = std::sqrt(std::pow(obstacles_r, 2) - std::pow(p_dist, 2));
+          // calculate the intersection points
+          double x1 = x_int + d * std::cos(std::atan(m));
+          double y1 = y_int + d * std::sin(std::atan(m));
+          double x2 = x_int - d * std::cos(std::atan(m));
+          double y2 = y_int - d * std::sin(std::atan(m));
+          // check which intersection point is closer to the start of the line
+          if (distance(x_start, y_start, x1, y1) < distance(x_start, y_start, x2, y2)) {
+            intersection_points.push_back(x1);
+            intersection_points.push_back(y1);
+          } else {
+            intersection_points.push_back(x2);
+            intersection_points.push_back(y2);
+          }
+        }
+      }
+    }
+    if (intersection_points.size() > 2) {
+      // calculate the closest intersection point to the start of the line
+      for (size_t i = 0; i < intersection_points.size(); i += 2) {
+        if (distance(x_start, y_start, intersection_points.at(i), intersection_points.at(i + 1)) < 
+        distance(x_start, y_start, intersection_points.at(0), intersection_points.at(1))) {
+          intersection_points.at(0) = intersection_points.at(i);
+          intersection_points.at(1) = intersection_points.at(i + 1);
+        }
+      }
+    }
+    std::vector<double> closest_intersection;
+    if (intersection_points.size() > 0) {
+      closest_intersection.push_back(intersection_points.at(0));
+      closest_intersection.push_back(intersection_points.at(1));
+    }
+    return closest_intersection;
   }
 
 
