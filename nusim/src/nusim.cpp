@@ -278,12 +278,15 @@ private:
   std::uniform_real_distribution<double> wheel_pos_db;
   int col_detect_index;
   Transform2D base_lidar_transform {{-0.032, 0.0}, 0.0};
+  Transform2D world_lidar_transform {{0.0, 0.0}, 0.0};
 
   /// \brief The timer callback
   void timer_callback()
   {
     // std::cout << "robot x: " << robot_.get_robot_config().translation().x << std::endl;
     // std::cout << "x tele: " << x_tele << std::endl;
+    // RCLCPP_INFO_STREAM(get_logger(), "theta: " << base_lidar_transform.rotation());
+    // RCLCPP_INFO_STREAM(get_logger(), "THETA: " << robot_.get_robot_config().rotation());
     // publish the current timestep
     auto message = std_msgs::msg::UInt64();
     message.data = timer_count_;
@@ -634,17 +637,23 @@ private:
     lidar_scan.range_min = lidar_range_min;
     lidar_scan.range_max = lidar_range_max;
 
+    // caluclate the lidar transform
+    world_lidar_transform = robot_.get_robot_config() * base_lidar_transform;
+
     // loop through each lidar laser ray
     for (double i = lidar_scan.angle_min; i < lidar_scan.angle_max; i += lidar_scan.angle_increment) {
-      double x_start = x_tele + base_lidar_transform.translation().x;
-      double y_start = y_tele + base_lidar_transform.translation().y;
-      double theta = theta_tele + base_lidar_transform.rotation();
-      double x_end = x_start + lidar_range_max * std::cos(theta + i);
+      // calculate the start and end points of the lidar scan
+      // add the base_lidar_transform to the start point to account for frame offser
+      // between base_footprint and base_scan
+      double x_start = world_lidar_transform.translation().x;
+      double y_start = world_lidar_transform.translation().y; 
+      double theta = world_lidar_transform.rotation();
+      double x_end = x_start + lidar_range_max * std::cos(theta + i);;
       double y_end = y_start + lidar_range_max * std::sin(theta + i);
       std::vector<double> intersection_points = lidar_obstacle_intersection(x_start, y_start, x_end, y_end);
-      if (intersection_points.size() > 0) {
+      if (intersection_points.size() >= 2) {
         double range = distance(x_start, y_start, intersection_points.at(0), intersection_points.at(1));
-        range += lidar_db(get_random());
+        // range += lidar_db(get_random());
         lidar_scan.ranges.push_back(range);   
       }
       else {
@@ -715,7 +724,6 @@ private:
     }
     return closest_intersection;
   }
-
 
   /// \brief Calculate the distance between two points
   /// \param x1 The x coordinate of the first point
