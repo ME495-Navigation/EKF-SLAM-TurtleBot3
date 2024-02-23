@@ -20,7 +20,7 @@
 ///     input_noise (double): The noise to be added to the wheel velocities.
 ///     slip_fraction (double): The fraction of slip in the wheels.
 ///     basic_sensor_variance (double): The basic sensor variance.
-///     max_range (double): The maximum range of the laser sensor.
+///     max_range (double): The maximum range of the fake sensor.
 ///
 /// PUBLISHERS:
 ///     ~/time_step (std_msgs/msg/UInt64): Publishes the current timestep.
@@ -53,6 +53,7 @@
 #include "nav_msgs/msg/path.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include "sensor_msgs/msg/laser_scan.hpp"
 
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2/LinearMath/Quaternion.h"
@@ -165,8 +166,25 @@ public:
     slip_fraction = get_parameter("slip_fraction").as_double();
     declare_parameter("basic_sensor_variance", 0.0);
     basic_sensor_variance = get_parameter("basic_sensor_variance").as_double();
+    declare_parameter("lidar_noise", 0.0);
+    lidar_noise = get_parameter("lidar_noise").as_double();
+
     declare_parameter("max_range", 0.0);
     max_range = get_parameter("max_range").as_double();
+
+
+    declare_parameter("lidar_range_max", 3.5);
+    lidar_range_max = get_parameter("lidar_range_max").as_double();
+    declare_parameter("lidar_range_min", 0.12);
+    lidar_range_min = get_parameter("lidar_range_min").as_double();
+    declare_parameter("lidar_angle_increment", 0.01745329238474369);
+    lidar_angle_increment = get_parameter("lidar_angle_increment").as_double();
+    declare_parameter("lidar_angle_min", 0.0);
+    lidar_angle_min = get_parameter("lidar_angle_min").as_double();
+    declare_parameter("lidar_angle_max", 6.2657318115234375);
+    lidar_angle_max = get_parameter("lidar_angle_max").as_double();
+    declare_parameter("lidar_resolution", 0.0);
+    lidar_resolution = get_parameter("lidar_resolution").as_double();
 
     // Initialize diff_drive class
     robot_ = DiffDrive{track_width / 2.0, wheel_radius, {0.0, 0.0}, {{x_tele, y_tele}, theta_tele}};
@@ -189,6 +207,9 @@ public:
     sensor_data_publisher_ = create_publisher<nuturtlebot_msgs::msg::SensorData>(
       "red/sensor_data",
       10);
+    lidar_publisher_ = create_publisher<sensor_msgs::msg::LaserScan>(
+      "red/lidar",
+      10);
     
     //create a path publisher
     path_publisher_ = create_publisher<nav_msgs::msg::Path>("red/path", 10);
@@ -198,6 +219,7 @@ public:
     wheel_vel_db = std::normal_distribution<>(0.0, input_noise);
     wheel_pos_db = std::uniform_real_distribution<>(-slip_fraction, slip_fraction);
     fake_obs_db = std::normal_distribution<>(0.0, basic_sensor_variance);
+    lidar_db = std::normal_distribution<>(0.0, lidar_noise);
 
     // Create services
     reset_ = create_service<std_srvs::srv::Empty>(
@@ -213,8 +235,8 @@ public:
       std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
     // create marker array publishing timer
-    marker_timer_ = create_wall_timer(
-      200ms, std::bind(&NuSim::marker_timer_callback, this));
+    five_hz_timer_ = create_wall_timer(
+      200ms, std::bind(&NuSim::five_hz_timer_callback, this));
 
     // Create timer
     timer_ = create_wall_timer(
@@ -229,10 +251,11 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr fake_sensor_obs_publisher_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_publisher_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr lidar_publisher_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_;
   rclcpp::Service<nusim::srv::Teleport>::SharedPtr teleport_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
-  rclcpp::TimerBase::SharedPtr marker_timer_;
+  rclcpp::TimerBase::SharedPtr five_hz_timer_;
   rclcpp::TimerBase::SharedPtr timer_;
   tf2::Quaternion body_quaternion;
   nav_msgs::msg::Path path_msg;
@@ -241,6 +264,7 @@ private:
   double wheel_radius, track_width, motor_cmd_max;
   double motor_cmd_per_rad_sec, encoder_ticks_per_rad, collision_radius;
   double input_noise, slip_fraction, basic_sensor_variance, max_range;
+  double lidar_noise, lidar_range_max, lidar_range_min, lidar_angle_increment, lidar_angle_min, lidar_angle_max, lidar_resolution;
   std::vector<double> obstacles_x{}, obstacles_y{};
   double obstacles_r, sim_timestep;
   WheelVelocities wheel_vels {0.0, 0.0};
@@ -250,6 +274,7 @@ private:
   size_t timer_count_;
   std::normal_distribution<double> wheel_vel_db;
   std::normal_distribution<double> fake_obs_db;
+  std::normal_distribution<double> lidar_db;
   std::uniform_real_distribution<double> wheel_pos_db;
   int col_detect_index;
 
@@ -280,9 +305,10 @@ private:
   }
 
   /// \brief The marker timer callback
-  void marker_timer_callback()
+  void five_hz_timer_callback()
   {
     fake_sensor_marker_publisher();
+    lidar_scan_publisher();
   }
 
   /// \brief Updated robot config frame publisher
@@ -594,6 +620,20 @@ private:
     }
     fake_sensor_obs_publisher_->publish(fake_ob_array);
   }
+
+  /// \brief Lidar scan publisher.
+  void lidar_scan_publisher()
+  {
+    sensor_msgs::msg::LaserScan lidar_scan;
+    lidar_scan.header.frame_id = "nusim/base_scan";
+    lidar_scan.header.stamp = rclcpp::Clock().now();
+    lidar_scan.angle_min = lidar_angle_min;
+    lidar_scan.angle_max = lidar_angle_max;
+    lidar_scan.angle_increment = lidar_angle_increment;
+    lidar_scan.range_min = lidar_range_min;
+    lidar_scan.range_max = lidar_range_max;
+  }
+
 
   /// \brief Calculate the distance between two points
   /// \param x1 The x coordinate of the first point
