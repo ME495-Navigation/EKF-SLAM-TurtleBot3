@@ -34,6 +34,9 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2/LinearMath/Quaternion.h"
 #include "nav_msgs/msg/odometry.hpp"
+#include "nav_msgs/msg/path.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
 
 #include "turtlelib/diff_drive.hpp"
 using turtlelib::DiffDrive;
@@ -117,6 +120,9 @@ public:
 
     // Create publishers
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", 10);
+    //create a path publisher
+    path_publisher_ = create_publisher<nav_msgs::msg::Path>("blue/path", 10);
+    path_msg.header.frame_id = "odom";
 
     // Create services
     initial_pose_ = create_service<nuturtle_control::srv::InitialPose>(
@@ -145,10 +151,12 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_publisher_;
   rclcpp::Service<nuturtle_control::srv::InitialPose>::SharedPtr initial_pose_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> odom_tf_;
   tf2::Quaternion body_quaternion;
   nav_msgs::msg::Odometry odom_msg_;
+  nav_msgs::msg::Path path_msg;
   std::string body_id, odom_id, wheel_left, wheel_right;
   double wheel_radius, track_width;
   double x_tele, y_tele, theta_tele;
@@ -156,7 +164,10 @@ private:
   DiffDrive nuturtle_{0.0, 0.0};
 
   /// \brief The timer callback
-  void timer_callback() {timer_count_++;}
+  void timer_callback() {
+    timer_count_++;
+    path_publisher();
+  }
 
   /// \brief Update the robot configuration and publish the odometry
   /// message/transform
@@ -207,6 +218,28 @@ private:
 
     // Send the transformation
     odom_tf_->sendTransform(t);
+  }
+
+  /// \brief Publishes the path of the turtlebot
+  void path_publisher()
+  {
+    path_msg.header.stamp = rclcpp::Clock().now();
+    geometry_msgs::msg::PoseStamped pose_stamp;
+    pose_stamp.header.stamp = rclcpp::Clock().now();
+    pose_stamp.header.frame_id = "odom";
+    pose_stamp.pose.position.x = nuturtle_.get_robot_config().translation().x;
+    pose_stamp.pose.position.y = nuturtle_.get_robot_config().translation().y;
+    pose_stamp.pose.position.z = 0.0;
+
+    // Create a quaternion to hold the rotation of the turtlebot
+    body_quaternion.setRPY(0, 0, nuturtle_.get_robot_config().rotation());
+    pose_stamp.pose.orientation.x = body_quaternion.x();
+    pose_stamp.pose.orientation.y = body_quaternion.y();
+    pose_stamp.pose.orientation.z = body_quaternion.z();
+    pose_stamp.pose.orientation.w = body_quaternion.w();
+
+    path_msg.poses.push_back(pose_stamp);
+    path_publisher_->publish(path_msg);
   }
 
   /// \brief Callback for the initial pose service
