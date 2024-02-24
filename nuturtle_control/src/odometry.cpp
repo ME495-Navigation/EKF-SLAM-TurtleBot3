@@ -164,27 +164,30 @@ private:
   void joint_state_callback(const sensor_msgs::msg::JointState & msg)
   {
 
+    // use fk to update the robot's configuration
+    const auto updated_config = nuturtle_.forward_kinematics(
+      WheelConfig{msg.position.at(0), msg.position.at(1)});
+
+    // Create a quaternion to hold the rotation of the turtlebot
+    body_quaternion.setRPY(0, 0, updated_config.rotation());
+
     const auto robot_twist = nuturtle_.robot_body_twist(
       WheelConfig{msg.position.at(0), msg.position.at(1)});
     odom_msg_.twist.twist.linear.x = robot_twist.x;
     odom_msg_.twist.twist.linear.y = robot_twist.y;
     odom_msg_.twist.twist.angular.z = robot_twist.omega;
 
-    // publish the odometry message
-    odom_pub_->publish(odom_msg_);
-
-    // use fk to update the robot's configuration
-    const auto updated_config = nuturtle_.forward_kinematics(
-      WheelConfig{msg.position.at(0), msg.position.at(1)});
-
     // update the odometry message
     odom_msg_.header.stamp = msg.header.stamp;
     odom_msg_.pose.pose.position.x = updated_config.translation().x;
     odom_msg_.pose.pose.position.y = updated_config.translation().y;
-    odom_msg_.pose.pose.orientation.z = updated_config.rotation();
+    odom_msg_.pose.pose.orientation.x = body_quaternion.x();
+    odom_msg_.pose.pose.orientation.y = body_quaternion.y();
+    odom_msg_.pose.pose.orientation.z = body_quaternion.z();
+    odom_msg_.pose.pose.orientation.w = body_quaternion.w();
 
-    // Create a quaternion to hold the rotation of the turtlebot
-    body_quaternion.setRPY(0, 0, odom_msg_.pose.pose.orientation.z);
+    // publish the odometry message
+    odom_pub_->publish(odom_msg_);
 
     // publish the robot's transform
     geometry_msgs::msg::TransformStamped t;

@@ -11,7 +11,7 @@
 ///     collision_radius (double): The collision radius of the robot.
 ///
 /// PUBLISHERS:
-///     wheel_cmd (nuturtlebot_msgs/msg/WheelCmd): Subscribes to the wheel commands.
+///    wheel_cmd (nuturtlebot_msgs/msg/WheelCmd): Subscribes to the wheel commands.
 ///    joint_states (sensor_msgs/msg/JointState): The joint states of the turtlebot.
 ///
 /// SUBSCRIBERS:
