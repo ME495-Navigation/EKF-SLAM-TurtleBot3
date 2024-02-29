@@ -1,5 +1,5 @@
 /// \file
-/// \brief Odometry node for the turtlebot.
+/// \brief Slam/Odometry node for the turtlebot.
 ///
 /// PARAMETERS:
 ///     rate (double):The frequency of the odometry node timer.
@@ -28,6 +28,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <armadillo>
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
@@ -37,24 +38,30 @@
 #include "nav_msgs/msg/path.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
-
 #include "turtlelib/diff_drive.hpp"
+#include "turtlelib/geometry2d.hpp"
+#include "nuslam/srv/initial_pose.hpp"
+#include "sensor_msgs/msg/laser_scan.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
+
 using turtlelib::DiffDrive;
 using turtlelib::Transform2D;
 using turtlelib::Twist2D;
 using turtlelib::WheelConfig;
 using turtlelib::WheelVelocities;
-
-#include "nuslam/srv/initial_pose.hpp"
-
+using turtlelib::almost_equal;
 using namespace std::chrono_literals;
 
-/// \brief Odometry node for the turtlebot.
-class Odometry : public rclcpp::Node
+// Constants
+constexpr int MAX_OBSTACLES = 30; // Maximum number of obstacles
+constexpr int STATE_SIZE = MAX_OBSTACLES * 2 + 3; // State size for the EKF
+
+/// \brief Slam node for the turtlebot.
+class Slam : public rclcpp::Node
 {
 public:
-  Odometry()
-  : Node("odometry"), timer_count_(0)
+  Slam()
+  : Node("slam"), timer_count_(0)
   {
     // Declare parameters
     auto timer_param_desc = rcl_interfaces::msg::ParameterDescriptor{};
@@ -115,7 +122,14 @@ public:
     joint_state_ = create_subscription<sensor_msgs::msg::JointState>(
       "joint_states", 10,
       std::bind(
-        &Odometry::joint_state_callback, this,
+        &Slam::joint_state_callback, this,
+        std::placeholders::_1));
+    
+    // create subcriber to the fake sensor topic
+    fake_sensor_sub_ = create_subscription<visualization_msgs::msg::MarkerArray>(
+      "fake_sensor", 10,
+      std::bind(
+        &Slam::fake_sensor_callback, this,
         std::placeholders::_1));
 
     // Create publishers
@@ -128,7 +142,7 @@ public:
     initial_pose_ = create_service<nuslam::srv::InitialPose>(
       "initial_pose",
       std::bind(
-        &Odometry::initial_pose_callback, this, std::placeholders::_1,
+        &Slam::initial_pose_callback, this, std::placeholders::_1,
         std::placeholders::_2));
 
     // Initialize the transform broadcaster
@@ -144,12 +158,13 @@ public:
 
     // Create timer
     timer_ =
-      create_wall_timer(rate, std::bind(&Odometry::timer_callback, this));
+      create_wall_timer(rate, std::bind(&Slam::timer_callback, this));
   }
 
 private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_;
+  rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr fake_sensor_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_publisher_;
   rclcpp::Service<nuslam::srv::InitialPose>::SharedPtr initial_pose_;
@@ -162,6 +177,9 @@ private:
   double x_tele, y_tele, theta_tele;
   size_t timer_count_;
   DiffDrive nuturtle_{0.0, 0.0};
+  arma::vec state {STATE_SIZE, arma::fill::zeros}; // slam state
+  arma::mat covar {STATE_SIZE, STATE_SIZE, arma::fill::eye}; // covariance
+  WheelConfig prev_wheel_config {}; // previous wheel configuration
 
   /// \brief The timer callback
   void timer_callback() {
@@ -220,6 +238,50 @@ private:
     odom_tf_->sendTransform(t);
   }
 
+  /// \brief Callback for the fake sensor
+  /// EKF SLAM logic is implemented here
+  /// \param msg The fake sensor message
+  void fake_sensor_callback(const visualization_msgs::msg::MarkerArray::SharedPtr msg)
+  {
+    // Get the robot's wheel configuration
+    const auto wheel_config = nuturtle_.get_wheel_config();
+
+    // update the state
+    state(0) = nuturtle_.get_robot_config().rotation();
+    state(1) = nuturtle_.get_robot_config().translation().x;
+    state(2) = nuturtle_.get_robot_config().translation().y;
+
+    // Get the robot's twist
+    const auto robot_twist = nuturtle_.wheel_twist(wheel_config, prev_wheel_config);
+
+    // EKF prediction
+    EKF_Slam_predict(state, covar, robot_twist);
+
+  }
+
+  /// \brief EKF SLAM prediction step
+  /// updates the state and covariance
+  /// \param state The state vector
+  /// \param covar The covariance matrix
+  /// \param twist The robot's twist
+  void EKF_Slam_predict(arma::vec & state, arma::mat & covar, const Twist2D & twist)
+  {
+    // Create the state transition model
+    // check if the angular component of the twist is zero
+    if (almost_equal(twist.omega, 0.0)) {
+      // if the angular component is zero
+      state(1) += twist.x * std::cos(state(0));
+      state(2) += twist.x * std::sin(state(0));
+    } else {
+      // if the angular component is non-zero
+      state(1) += (twist.x / twist.omega) * (std::sin(state(0) + twist.omega) - std::sin(state(0)));
+      state(2) += (twist.x / twist.omega) * (-std::cos(state(0) + twist.omega) + std::cos(state(0)));
+      state(0) += twist.omega;
+    }
+
+  }
+  
+
   /// \brief Publishes the path of the turtlebot
   void path_publisher()
   {
@@ -261,7 +323,7 @@ private:
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<Odometry>());
+  rclcpp::spin(std::make_shared<Slam>());
   rclcpp::shutdown();
   return 0;
 }

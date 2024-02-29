@@ -49,10 +49,28 @@ namespace turtlelib{
         // fk calculation, refer to eq in doc
         Twist2D body_twist;
         body_twist.omega =  ((wheel_vel.rw - wheel_vel.lw)*wheel_radius)/(2*half_trackwidth);
-        body_twist.x = 0.5*wheel_radius*cos(robot_config.rotation())*(wheel_vel.rw + wheel_vel.lw);
-        body_twist.y = 0.5*wheel_radius*sin(robot_config.rotation())*(wheel_vel.rw + wheel_vel.lw);
+        body_twist.x = 0.5*wheel_radius*(wheel_vel.rw + wheel_vel.lw);
+        body_twist.y = 0.0;
 
         return body_twist;
+    }
+
+    Twist2D DiffDrive::wheel_twist(WheelConfig new_wheel_position, WheelConfig prev_wheel_position) const{
+        // assume absolute encoder readings (from initial wheel position)
+        // this won't matter as we are working with difference
+        // in readings anyways (from initial wheel positions)
+        WheelVelocities wheel_vel;
+        // assume unit time
+        wheel_vel.lw = new_wheel_position.lw - prev_wheel_position.lw;
+        wheel_vel.rw = new_wheel_position.rw - prev_wheel_position.rw;
+
+        // fk calculation, refer to eq in doc
+        Twist2D wheel_twist;
+        wheel_twist.omega =  ((wheel_vel.rw - wheel_vel.lw)*wheel_radius)/(2*half_trackwidth);
+        wheel_twist.x = 0.5*wheel_radius*(wheel_vel.rw + wheel_vel.lw);
+        wheel_twist.y = 0.0;
+
+        return wheel_twist;
     }
 
     WheelVelocities DiffDrive::inverse_kinematics(Twist2D body_twist){

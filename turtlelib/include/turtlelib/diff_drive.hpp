@@ -78,6 +78,12 @@ namespace turtlelib
         /// \return updated robot body twist
         Twist2D robot_body_twist(WheelConfig wheel_position) const;
 
+        /// \brief using fk calculate twist between two wheel positions
+        /// \param new_wheel_position - the new wheel positions
+        /// \param prev_wheel_position - the previous wheel positions
+        /// \return the twist between the two wheel positions
+        Twist2D wheel_twist(WheelConfig new_wheel_position, WheelConfig prev_wheel_position) const;
+
         /// \brief using ik given body twist, calculate wheel velocities
         /// \param body_twist - the body twist
         /// \return the wheel velocities

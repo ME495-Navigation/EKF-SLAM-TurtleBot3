@@ -16,7 +16,7 @@
 ///
 /// SUBSCRIBERS:
 ///     cmd_vel (geometry_msgs/msg//Twist): Publishes the commands of the turtelbot.
-///     red/sensor_data (nuturtlebot_msgs/msg//SensorData): Publishes the sensor data of the turtlebot.
+///     red/sensor_data (nuturtlebot_msgs/msg/SensorData): Publishes the sensor data of the turtlebot.
 
 #include <chrono>
 #include <functional>

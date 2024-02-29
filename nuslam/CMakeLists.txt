@@ -19,6 +19,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 find_package(turtlelib REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(Doxygen)
@@ -32,7 +33,7 @@ include_directories(${ARMADILLO_INCLUDE_DIRS})
 
 add_executable(slam src/slam.cpp)
 ament_target_dependencies(slam rclcpp std_msgs std_srvs geometry_msgs sensor_msgs
-nuturtlebot_msgs nav_msgs tf2_ros tf2)
+nuturtlebot_msgs nav_msgs tf2_ros tf2 visualization_msgs turtlelib) 
 target_link_libraries(slam turtlelib::turtlelib ${ARMADILLO_LIBRARIES})
 target_link_libraries(slam "${cpp_typesupport_target}")
 
