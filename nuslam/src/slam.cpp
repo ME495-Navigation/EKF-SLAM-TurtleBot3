@@ -247,9 +247,9 @@ private:
     const auto wheel_config = nuturtle_.get_wheel_config();
 
     // update the state
-    state(0) = nuturtle_.get_robot_config().rotation();
-    state(1) = nuturtle_.get_robot_config().translation().x;
-    state(2) = nuturtle_.get_robot_config().translation().y;
+    // state(0) = nuturtle_.get_robot_config().rotation();
+    // state(1) = nuturtle_.get_robot_config().translation().x;
+    // state(2) = nuturtle_.get_robot_config().translation().y;
 
     // Get the robot's twist
     const auto robot_twist = nuturtle_.wheel_twist(wheel_config, prev_wheel_config);
@@ -266,7 +266,12 @@ private:
   /// \param twist The robot's twist
   void EKF_Slam_predict(arma::vec & state, arma::mat & covar, const Twist2D & twist)
   {
+
+    // Create identity matrix of state_size
+    arma::mat I = arma::eye<arma::mat>(STATE_SIZE, STATE_SIZE);
+
     // Create the state transition model
+    // Update the estimate using the model (odometry)
     // check if the angular component of the twist is zero
     if (almost_equal(twist.omega, 0.0)) {
       // if the angular component is zero
@@ -278,6 +283,25 @@ private:
       state(2) += (twist.x / twist.omega) * (-std::cos(state(0) + twist.omega) + std::cos(state(0)));
       state(0) += twist.omega;
     }
+
+    // Update the covariance
+    // Initialize the A_t matrix
+    arma::mat A_t (STATE_SIZE, STATE_SIZE, arma::fill::zeros);
+    // check if angular component of twist is zero
+    if (almost_equal(twist.omega, 0.0)){
+      // if the angular component is zero
+      A_t(1,0) = -twist.x * std::sin(state(0));
+      A_t(2,0) = twist.x * std::cos(state(0));
+      A_t = I + A_t;
+    }
+    else{
+      // if the angular component is non-zero
+      A_t(1,0) = (twist.x / twist.omega) * (std::cos(state(0) + twist.omega) - std::cos(state(0)));
+      A_t(2,0) = (twist.x / twist.omega) * (std::sin(state(0) + twist.omega) - std::sin(state(0)));
+      A_t = I + A_t;
+    }
+
+    covar = A_t * covar * A_t.t();
 
   }
   
