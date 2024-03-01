@@ -147,6 +147,7 @@ public:
 
     // Initialize the transform broadcaster
     odom_tf_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+    map_tf_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
     // Initialize the odometry message
     odom_msg_.header.frame_id = odom_id;
@@ -169,6 +170,7 @@ private:
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_publisher_;
   rclcpp::Service<nuslam::srv::InitialPose>::SharedPtr initial_pose_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> odom_tf_;
+  std::unique_ptr<tf2_ros::TransformBroadcaster> map_tf_;
   tf2::Quaternion body_quaternion;
   nav_msgs::msg::Odometry odom_msg_;
   nav_msgs::msg::Path path_msg;
@@ -256,6 +258,28 @@ private:
 
     // EKF prediction
     EKF_Slam_predict(state, covar, robot_twist);
+
+     // Create a transform to hold the robot's configuration
+    Transform2D map_tf {{state(1), state(2)}, state(0)};
+
+    // broadcast the robot's map transform
+    geometry_msgs::msg::TransformStamped map_t;
+    map_t.header.stamp = this->get_clock()->now();
+    map_t.header.frame_id = "map";
+    map_t.child_frame_id = "green/base_footprint";
+    map_t.transform.translation.x = map_tf.translation().x;
+    map_t.transform.translation.y = map_tf.translation().y;
+    map_t.transform.translation.z = 0.0;
+
+    // Create a quaternion to hold the rotation of the turtlebot
+    body_quaternion.setRPY(0, 0, map_tf.rotation());
+    map_t.transform.rotation.x = body_quaternion.x();
+    map_t.transform.rotation.y = body_quaternion.y();
+    map_t.transform.rotation.z = body_quaternion.z();
+    map_t.transform.rotation.w = body_quaternion.w();
+
+    // Send the transformation
+    map_tf_->sendTransform(map_t);
 
   }
 
