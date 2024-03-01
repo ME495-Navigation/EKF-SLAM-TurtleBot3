@@ -409,7 +409,11 @@ private:
     arma::mat K = covar * H.t() * (H * covar * H.t() + R).i();
 
     // Update the state estimate
-    state += K * (z - z_hat);
+    // Compute the difference between the actual and the theoretical measurement
+    arma::vec z_diff = z - z_hat;
+    // normalize the angle
+    z_diff(1) = turtlelib::normalize_angle(z_diff(1));
+    state += K * z_diff;
 
     // Update the covariance
     const auto I = arma::eye<arma::mat>(STATE_SIZE, STATE_SIZE);
