@@ -60,4 +60,8 @@ install(DIRECTORY
         # tests
         DESTINATION share/${PROJECT_NAME}/)
 
+if(NOT CMAKE_BUILD_TYPE)        # If no build type is set, set one
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Type of build." FORCE)
+endif()
+
 ament_package()

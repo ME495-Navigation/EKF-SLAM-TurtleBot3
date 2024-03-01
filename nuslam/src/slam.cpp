@@ -166,9 +166,17 @@ public:
 
     // Initialize the process noise covariance matrix
     // Set the diagonal elements to 0.01 (constant value)
-    Q_bar(0, 0) = 0.01;
-    Q_bar(1, 1) = 0.01;
-    Q_bar(2, 2) = 0.01;
+    Q_bar(0, 0) = 0.1;
+    Q_bar(1, 1) = 0.1;
+    Q_bar(2, 2) = 0.1;
+
+    // Initialize the measurement sensor noise
+    v_t(0) = 0.1;
+    v_t(1) = 0.1;
+
+    // Initialize the measurement sensor noise covariance
+    R(0, 0) = 0.1;
+    R(1, 1) = 0.1;
 
     // Create timer
     timer_ =
@@ -196,6 +204,8 @@ private:
   arma::vec state {STATE_SIZE, arma::fill::zeros}; // slam state
   arma::mat covar {STATE_SIZE, STATE_SIZE, arma::fill::zeros}; // covariance
   arma::mat Q_bar {STATE_SIZE, STATE_SIZE, arma::fill::zeros}; // process noise covariance
+  arma::vec v_t {2, arma::fill::zeros}; // measurement sensor noise
+  arma::mat R {2, 2, arma::fill::zeros}; // measurement sensor noise covariance
 
   /// \brief The timer callback
   void timer_callback() {
@@ -291,9 +301,7 @@ private:
 
       // Call the EKF SLAM update step
       EKF_Slam_update(state, covar, marker_x, marker_y, marker_id);
-
     }
-
 
     // Broadcast the map transform
     map_tf_broadcaster();
@@ -358,7 +366,54 @@ private:
     // Convert the x and y position of the obstacle to range measurement format
     const auto r = std::sqrt(std::pow(marker_x, 2) + std::pow(marker_y, 2));
     const auto phi = std::atan2(marker_y, marker_x);
+    // Construct the actual measurement
+    arma::vec z = {r, phi};
+    // Add sensor noise
+    z += v_t;
 
+    // Check if the marker is already in the state
+    const auto marker_index = marker_id * 2 + 3;
+    if (state(marker_index) == 0 && state(marker_index + 1) == 0) {
+      // If the marker is not in the state, add it
+      state(marker_index) = state(1) + r * std::cos(phi + state(0));
+      state(marker_index + 1) = state(2) + r * std::sin(phi + state(0));
+      // Log the intialization
+      RCLCPP_INFO_STREAM(
+        get_logger(), "Initialized marker " << marker_id << " at (" <<
+          state(marker_index) << ", " << state(marker_index + 1) << ")");
+    }
+
+    // Create the measurement model
+    // Compute the theoretical measurement given the current state estimate
+    // Compute relative distances between the obstacles and the robot
+    const auto delta_x = state(marker_index) - state(1);
+    const auto delta_y = state(marker_index + 1) - state(2);
+    const auto d = std::pow(delta_x, 2) + std::pow(delta_y, 2); // squared distance
+    // Construct the theoretical measurement
+    arma::vec z_hat = {std::sqrt(d), turtlelib::normalize_angle(std::atan2(delta_y, delta_x) - state(0))};
+
+    // Compute the measurement model jacobian
+    // Initialize the H matrix
+    arma::mat H (2, STATE_SIZE, arma::fill::zeros);
+    H(1, 0) = -1;
+    H(0, 1) = -delta_x / std::sqrt(d);
+    H(0, 2) = -delta_y / std::sqrt(d);
+    H(1, 1) = delta_y / d;
+    H(1, 2) = -delta_x / d;
+    H(0, marker_index) = delta_x / std::sqrt(d);
+    H(0, marker_index + 1) = delta_y / std::sqrt(d);
+    H(1, marker_index) = -delta_y / d;
+    H(1, marker_index + 1) = delta_x / d;
+
+    // Compute the Kalman gain
+    arma::mat K = covar * H.t() * (H * covar * H.t() + R).i();
+
+    // Update the state estimate
+    state += K * (z - z_hat);
+
+    // Update the covariance
+    const auto I = arma::eye<arma::mat>(STATE_SIZE, STATE_SIZE);
+    covar = (I - K * H) * covar;
   }
   
   /// \brief Map transform broadcaster
