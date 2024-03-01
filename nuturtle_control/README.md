@@ -1,5 +1,5 @@
 # NUTURTLE_CONTROL Library
-A library for controlling motioin of the turtlebot.
+A library for controlling motion of the turtlebot.
 
 # Launchfile
 Use `ros2 launch nuturtle_control start_robot.launch.xml  cmd_src:=X robot:=Y use_rviz:=Z`
