@@ -275,6 +275,26 @@ private:
     // EKF prediction
     EKF_Slam_predict(state, covar, robot_twist);
 
+    // iterate through each marker in the fake sensor message
+    for (size_t i=0; i < msg->markers.size(); i++) {
+
+      // Check if the marker is marked for deletion
+      if (msg->markers[i].action == visualization_msgs::msg::Marker::DELETE) {
+        continue;
+      }
+
+      // Get the marker's position
+      const auto marker_x = msg->markers[i].pose.position.x;
+      const auto marker_y = msg->markers[i].pose.position.y;
+      // Get the marker's id
+      const auto marker_id = msg->markers[i].id;
+
+      // Call the EKF SLAM update step
+      EKF_Slam_update(state, covar, marker_x, marker_y, marker_id);
+
+    }
+
+
     // Broadcast the map transform
     map_tf_broadcaster();
 
@@ -322,6 +342,23 @@ private:
     }
 
     covar = A_t * covar * A_t.t() + Q_bar;
+  }
+
+  /// \brief EKF SLAM update step
+  /// updates the state and covariance
+  /// \param state The state vector
+  /// \param covar The covariance matrix
+  /// \param marker_x The x position of the marker
+  /// \param marker_y The y position of the marker
+  /// \param marker_id The id of the marker
+  void EKF_Slam_update(
+    arma::vec & state, arma::mat & covar,
+    const double & marker_x, const double & marker_y, const int & marker_id)
+  {
+    // Convert the x and y position of the obstacle to range measurement format
+    const auto r = std::sqrt(std::pow(marker_x, 2) + std::pow(marker_y, 2));
+    const auto phi = std::atan2(marker_y, marker_x);
+
   }
   
   /// \brief Map transform broadcaster

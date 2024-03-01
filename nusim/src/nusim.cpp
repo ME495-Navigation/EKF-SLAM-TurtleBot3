@@ -592,12 +592,28 @@ private:
     // loop through all the obstacles in the list
     for (size_t i = 0; i < obstacles_x.size(); i++) {
       visualization_msgs::msg::Marker fake_ob;
-      fake_ob.header.frame_id = "nusim/world";
+      fake_ob.header.frame_id = "red/base_footprint";
       fake_ob.header.stamp = rclcpp::Clock().now();
-      fake_ob.id = i;
+      fake_ob.id = i; // required for data association
       fake_ob.type = visualization_msgs::msg::Marker::CYLINDER;
-      fake_ob.pose.position.x = obstacles_x.at(i) + fake_obs_db(get_random());
-      fake_ob.pose.position.y = obstacles_y.at(i) + fake_obs_db(get_random());
+      
+      if (distance(x_tele, y_tele, obstacles_x.at(i), obstacles_y.at(i)) > max_range) {
+        fake_ob.action = visualization_msgs::msg::Marker::DELETE;
+      } 
+      else {
+        fake_ob.action = visualization_msgs::msg::Marker::ADD;
+      }
+
+      // get position of the obstacle relative to the robot frame
+      const auto robot_pose = robot_.get_robot_config();
+      const auto obstacle_pose = Transform2D{{obstacles_x.at(i), obstacles_y.at(i)}, 0.0}; // in world frame
+      const auto relative_pose = robot_pose.inv() * obstacle_pose;
+
+      fake_ob.pose.position.x = relative_pose.translation().x + fake_obs_db(get_random());
+      fake_ob.pose.position.y = relative_pose.translation().y + fake_obs_db(get_random());
+
+      // fake_ob.pose.position.x = obstacles_x.at(i) + fake_obs_db(get_random());
+      // fake_ob.pose.position.y = obstacles_y.at(i) + fake_obs_db(get_random());
       fake_ob.pose.position.z = 0.25 / 2.0;
       fake_ob.pose.orientation.x = 0.0;
       fake_ob.pose.orientation.y = 0.0;
@@ -611,14 +627,6 @@ private:
       fake_ob.color.g = 1.0;
       fake_ob.color.b = 0.0;
       fake_ob.color.a = 0.5;
-      fake_ob.action = visualization_msgs::msg::Marker::ADD;
-      
-      if (distance(x_tele, y_tele, fake_ob.pose.position.x, fake_ob.pose.position.y) > max_range) {
-        fake_ob.action = visualization_msgs::msg::Marker::DELETE;
-      } 
-      else {
-        fake_ob.action = visualization_msgs::msg::Marker::ADD;
-      }
 
       fake_ob_array.markers.push_back(fake_ob);
     }
