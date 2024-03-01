@@ -80,6 +80,9 @@ public:
     declare_parameter("theta0", 0.0);
     theta_tele = get_parameter("theta0").as_double();
 
+    declare_parameter("obstacles.r", 0.1);
+    obstacles_r = get_parameter("obstacles.r").as_double();
+
     declare_parameter("body_id", "");
     body_id = get_parameter("body_id").as_string();
     if (body_id.empty()) {
@@ -132,7 +135,7 @@ public:
         &Slam::fake_sensor_callback, this,
         std::placeholders::_1));
 
-    // Create publishers
+    // create a odom path publisher
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", 10);
     //create a path publisher
     odom_path_publisher_ = create_publisher<nav_msgs::msg::Path>("blue/path", 10);
@@ -142,6 +145,8 @@ public:
     map_path_publisher_ = create_publisher<nav_msgs::msg::Path>("green/path", 10);
     map_path_msg.header.frame_id = "map";
 
+    // create a publisher for the map obstacles
+    map_obs_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>("map_obstacles", 10);
 
     // Create services
     initial_pose_ = create_service<nuslam::srv::InitialPose>(
@@ -196,6 +201,7 @@ private:
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr odom_path_publisher_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr map_path_publisher_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr map_obs_publisher_;
   rclcpp::Service<nuslam::srv::InitialPose>::SharedPtr initial_pose_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> odom_tf_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> map_tf_;
@@ -215,12 +221,14 @@ private:
   arma::mat Q_bar {STATE_SIZE, STATE_SIZE, arma::fill::zeros}; // process noise covariance
   arma::vec v_t {2, arma::fill::zeros}; // measurement sensor noise
   arma::mat R {2, 2, arma::fill::zeros}; // measurement sensor noise covariance
+  double obstacles_r;
 
   /// \brief The timer callback
   void timer_callback() {
     timer_count_++;
     odom_path_publisher();
     map_path_publisher();
+    map_obs_publisher();
   }
 
   /// \brief Update the robot configuration and publish the odometry
@@ -513,6 +521,44 @@ private:
 
     map_path_msg.poses.push_back(pose_stamp);
     map_path_publisher_->publish(map_path_msg);
+  }
+
+  /// \brief Publish the map obstacles
+  void map_obs_publisher()
+  {
+    visualization_msgs::msg::MarkerArray marker_array;
+    for (int i = 3; i < STATE_SIZE; i += 2) {
+      visualization_msgs::msg::Marker marker;
+      marker.header.frame_id = "map";
+      marker.header.stamp = rclcpp::Clock().now();
+      marker.id = i;
+      marker.type = visualization_msgs::msg::Marker::CYLINDER;
+      marker.pose.position.x = state(i);
+      marker.pose.position.y = state(i + 1);
+      marker.pose.position.z = 0.25 / 2.0;
+      marker.pose.orientation.x = 0.0;
+      marker.pose.orientation.y = 0.0;
+      marker.pose.orientation.z = 0.0;
+      marker.pose.orientation.w = 1.0;
+      marker.scale.x = obstacles_r * 2.0;
+      marker.scale.y = obstacles_r * 2.0;
+      marker.scale.z = 0.25;
+      // set color to green
+      marker.color.r = 0.0;
+      marker.color.g = 1.0;
+      marker.color.b = 0.0;
+      marker.color.a = 1.0;
+
+      // check if the position is zero
+      // if so, don't publish the marker
+      if (almost_equal(state(i), 0.0) && almost_equal(state(i + 1), 0.0)) {
+        marker.action = visualization_msgs::msg::Marker::DELETE;
+      } else {
+        marker.action = visualization_msgs::msg::Marker::ADD;
+      }
+      marker_array.markers.push_back(marker);
+    }
+    map_obs_publisher_->publish(marker_array);
   }
 
   /// \brief Callback for the initial pose service

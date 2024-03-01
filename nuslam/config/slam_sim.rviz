@@ -211,7 +211,7 @@ Visualization Manager:
       Visual Enabled: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
-      Name: MarkerArray
+      Name: Walls
       Namespaces:
         "": true
       Topic:
@@ -223,7 +223,7 @@ Visualization Manager:
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
-      Name: MarkerArray
+      Name: RedObstacles
       Namespaces:
         "": true
       Topic:
@@ -321,17 +321,17 @@ Visualization Manager:
         Value: /red/path
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: false
-      Name: MarkerArray
+      Enabled: true
+      Name: FakeObstacles
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /fake_sensor
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -520,6 +520,18 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /green/path
       Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: PredObstacles
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /map_obstacles
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -566,25 +578,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 2.2408485412597656
+      Distance: 2.762754201889038
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.19225282967090607
-        Y: -0.017969729378819466
-        Z: 0.17790734767913818
+        X: -0.03398521989583969
+        Y: -0.005367583595216274
+        Z: -0.13584911823272705
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6247967481613159
+      Pitch: 0.7397964000701904
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz_default_plugins)
-      Yaw: 3.152387857437134
+      Yaw: 3.312386989593506
     Saved: ~
 Window Geometry:
   Displays:
