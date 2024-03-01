@@ -498,6 +498,12 @@ private:
     pose_stamp.pose.orientation.w = body_quaternion.w();
 
     path_msg.poses.push_back(pose_stamp);
+
+    // check if the path message is too long
+    if (path_msg.poses.size() > 5000) {
+      path_msg.poses.erase(path_msg.poses.begin());
+    }
+
     odom_path_publisher_->publish(path_msg);
   }
 
@@ -520,6 +526,12 @@ private:
     pose_stamp.pose.orientation.w = body_quaternion.w();
 
     map_path_msg.poses.push_back(pose_stamp);
+
+    // check if the path message is too long
+    if (map_path_msg.poses.size() > 5000) {
+      map_path_msg.poses.erase(map_path_msg.poses.begin());
+    }
+
     map_path_publisher_->publish(map_path_msg);
   }
 

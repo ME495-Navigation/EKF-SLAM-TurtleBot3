@@ -239,6 +239,13 @@ private:
     pose_stamp.pose.orientation.w = body_quaternion.w();
 
     path_msg.poses.push_back(pose_stamp);
+
+    // check if the path message is too long
+    if (path_msg.poses.size() > 5000) {
+      path_msg.poses.erase(path_msg.poses.begin());
+    }
+
+    // publish the path message
     path_publisher_->publish(path_msg);
   }
 

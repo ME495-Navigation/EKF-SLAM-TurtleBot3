@@ -258,6 +258,7 @@ private:
   rclcpp::TimerBase::SharedPtr five_hz_timer_;
   rclcpp::TimerBase::SharedPtr timer_;
   tf2::Quaternion body_quaternion;
+  tf2::Quaternion path_quaternion;
   nav_msgs::msg::Path path_msg;
   double x_tele, y_tele, theta_tele, reset_x, reset_y, reset_theta;
   double arena_x, arena_y, wall_thickness = 0.5;
@@ -465,13 +466,20 @@ private:
     pose_stamp.pose.position.z = 0.0;
 
     // Create a quaternion to hold the rotation of the turtlebot
-    body_quaternion.setRPY(0, 0, robot_.get_robot_config().rotation());
-    pose_stamp.pose.orientation.x = body_quaternion.x();
-    pose_stamp.pose.orientation.y = body_quaternion.y();
-    pose_stamp.pose.orientation.z = body_quaternion.z();
-    pose_stamp.pose.orientation.w = body_quaternion.w();
+    path_quaternion.setRPY(0, 0, robot_.get_robot_config().rotation());
+    pose_stamp.pose.orientation.x = path_quaternion.x();
+    pose_stamp.pose.orientation.y = path_quaternion.y();
+    pose_stamp.pose.orientation.z = path_quaternion.z();
+    pose_stamp.pose.orientation.w = path_quaternion.w();
 
     path_msg.poses.push_back(pose_stamp);
+
+    // check if the path is too long
+    if (path_msg.poses.size() > 5000) {
+      path_msg.poses.erase(path_msg.poses.begin());
+    }
+
+    // publish the path
     path_publisher_->publish(path_msg);
   }
 
