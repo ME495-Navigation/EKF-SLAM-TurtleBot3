@@ -135,8 +135,8 @@ public:
     // Create publishers
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", 10);
     //create a path publisher
-    path_publisher_ = create_publisher<nav_msgs::msg::Path>("blue/path", 10);
-    path_msg.header.frame_id = "odom";
+    odom_path_publisher_ = create_publisher<nav_msgs::msg::Path>("blue/path", 10);
+    path_msg.header.frame_id = "nusim/world";
 
     // Create services
     initial_pose_ = create_service<nuslam::srv::InitialPose>(
@@ -189,7 +189,7 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_;
   rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr fake_sensor_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
-  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_publisher_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr odom_path_publisher_;
   rclcpp::Service<nuslam::srv::InitialPose>::SharedPtr initial_pose_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> odom_tf_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> map_tf_;
@@ -212,7 +212,7 @@ private:
   /// \brief The timer callback
   void timer_callback() {
     timer_count_++;
-    path_publisher();
+    odom_path_publisher();
   }
 
   /// \brief Update the robot configuration and publish the odometry
@@ -290,11 +290,6 @@ private:
   {
     // Get the robot's wheel configuration
     const auto wheel_config = nuturtle_.get_wheel_config();
-
-    // update the state
-    // state(0) = nuturtle_.get_robot_config().rotation();
-    // state(1) = nuturtle_.get_robot_config().translation().x;
-    // state(2) = nuturtle_.get_robot_config().translation().y;
 
     // Get the robot's twist
     const auto robot_twist = nuturtle_.wheel_twist(wheel_config, prev_wheel_config);
@@ -468,13 +463,13 @@ private:
     map_tf_->sendTransform(map_t);
   }
 
-  /// \brief Publishes the path of the turtlebot
-  void path_publisher()
+  /// \brief Publishes the odom path of the turtlebot
+  void odom_path_publisher()
   {
     path_msg.header.stamp = rclcpp::Clock().now();
     geometry_msgs::msg::PoseStamped pose_stamp;
     pose_stamp.header.stamp = rclcpp::Clock().now();
-    pose_stamp.header.frame_id = "odom";
+    pose_stamp.header.frame_id = "nusim/world";
     pose_stamp.pose.position.x = nuturtle_.get_robot_config().translation().x;
     pose_stamp.pose.position.y = nuturtle_.get_robot_config().translation().y;
     pose_stamp.pose.position.z = 0.0;
@@ -487,7 +482,7 @@ private:
     pose_stamp.pose.orientation.w = body_quaternion.w();
 
     path_msg.poses.push_back(pose_stamp);
-    path_publisher_->publish(path_msg);
+    odom_path_publisher_->publish(path_msg);
   }
 
   /// \brief Callback for the initial pose service

@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /TF1
         - /RedPath1/Topic1
         - /Odometry1/Shape1
       Splitter Ratio: 0.5
@@ -87,7 +88,7 @@ Visualization Manager:
         nusim/world:
           Value: false
         odom:
-          Value: false
+          Value: true
         red/base_footprint:
           Value: false
         red/base_link:
@@ -109,32 +110,32 @@ Visualization Manager:
       Show Names: true
       Tree:
         nusim/world:
+          blue/base_footprint:
+            blue/base_link:
+              blue/base_scan:
+                {}
+              blue/caster_back_link:
+                {}
+              blue/imu_link:
+                {}
+              blue/wheel_left_link:
+                {}
+              blue/wheel_right_link:
+                {}
           map:
-            green/base_footprint:
-              green/base_link:
-                green/base_scan:
-                  {}
-                green/caster_back_link:
-                  {}
-                green/imu_link:
-                  {}
-                green/wheel_left_link:
-                  {}
-                green/wheel_right_link:
-                  {}
-          odom:
-            blue/base_footprint:
-              blue/base_link:
-                blue/base_scan:
-                  {}
-                blue/caster_back_link:
-                  {}
-                blue/imu_link:
-                  {}
-                blue/wheel_left_link:
-                  {}
-                blue/wheel_right_link:
-                  {}
+            odom:
+              green/base_footprint:
+                green/base_link:
+                  green/base_scan:
+                    {}
+                  green/caster_back_link:
+                    {}
+                  green/imu_link:
+                    {}
+                  green/wheel_left_link:
+                    {}
+                  green/wheel_right_link:
+                    {}
           red/base_footprint:
             red/base_link:
               red/base_scan:
