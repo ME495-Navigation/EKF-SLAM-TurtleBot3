@@ -49,7 +49,7 @@
       <param name="input_noise" value="0.01" />
       <param name="slip_fraction" value="1.0" />
       <param name="basic_sensor_variance" value="0.01" />
-      <param name="max_range" value="0.5" />
+      <param name="max_range" value="1.0" />
       <param name="lidar_noise" value="0.01" /> 
       <param name="lidar_resolution" value="0.0" />       
     </node>
