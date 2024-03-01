@@ -138,6 +138,11 @@ public:
     odom_path_publisher_ = create_publisher<nav_msgs::msg::Path>("blue/path", 10);
     path_msg.header.frame_id = "nusim/world";
 
+    // create a map path publisher
+    map_path_publisher_ = create_publisher<nav_msgs::msg::Path>("green/path", 10);
+    map_path_msg.header.frame_id = "map";
+
+
     // Create services
     initial_pose_ = create_service<nuslam::srv::InitialPose>(
       "initial_pose",
@@ -167,17 +172,17 @@ public:
 
     // Initialize the process noise covariance matrix
     // Set the diagonal elements to 0.01 (constant value)
-    Q_bar(0, 0) = 0.1;
-    Q_bar(1, 1) = 0.1;
-    Q_bar(2, 2) = 0.1;
+    Q_bar(0, 0) = 0.001;
+    Q_bar(1, 1) = 0.001;
+    Q_bar(2, 2) = 0.001;
 
     // Initialize the measurement sensor noise
-    v_t(0) = 0.1;
-    v_t(1) = 0.1;
+    v_t(0) = 0.001;
+    v_t(1) = 0.001;
 
     // Initialize the measurement sensor noise covariance
-    R(0, 0) = 0.1;
-    R(1, 1) = 0.1;
+    R(0, 0) = 0.001;
+    R(1, 1) = 0.001;
 
     // Create timer
     timer_ =
@@ -190,6 +195,7 @@ private:
   rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr fake_sensor_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr odom_path_publisher_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr map_path_publisher_;
   rclcpp::Service<nuslam::srv::InitialPose>::SharedPtr initial_pose_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> odom_tf_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> map_tf_;
@@ -197,6 +203,7 @@ private:
   tf2::Quaternion body_quaternion;
   nav_msgs::msg::Odometry odom_msg_;
   nav_msgs::msg::Path path_msg;
+  nav_msgs::msg::Path map_path_msg;
   std::string body_id, odom_id, wheel_left, wheel_right;
   double wheel_radius, track_width;
   double x_tele, y_tele, theta_tele;
@@ -213,6 +220,7 @@ private:
   void timer_callback() {
     timer_count_++;
     odom_path_publisher();
+    map_path_publisher();
   }
 
   /// \brief Update the robot configuration and publish the odometry
@@ -483,6 +491,28 @@ private:
 
     path_msg.poses.push_back(pose_stamp);
     odom_path_publisher_->publish(path_msg);
+  }
+
+  /// \brief Publishes the map path of the turtlebot
+  void map_path_publisher()
+  {
+    map_path_msg.header.stamp = rclcpp::Clock().now();
+    geometry_msgs::msg::PoseStamped pose_stamp;
+    pose_stamp.header.stamp = rclcpp::Clock().now();
+    pose_stamp.header.frame_id = "map";
+    pose_stamp.pose.position.x = state(1);
+    pose_stamp.pose.position.y = state(2);
+    pose_stamp.pose.position.z = 0.0;
+
+    // Create a quaternion to hold the rotation of the turtlebot
+    body_quaternion.setRPY(0, 0, state(0));
+    pose_stamp.pose.orientation.x = body_quaternion.x();
+    pose_stamp.pose.orientation.y = body_quaternion.y();
+    pose_stamp.pose.orientation.z = body_quaternion.z();
+    pose_stamp.pose.orientation.w = body_quaternion.w();
+
+    map_path_msg.poses.push_back(pose_stamp);
+    map_path_publisher_->publish(map_path_msg);
   }
 
   /// \brief Callback for the initial pose service
