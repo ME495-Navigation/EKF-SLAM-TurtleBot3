@@ -148,6 +148,7 @@ public:
     // Initialize the transform broadcaster
     odom_tf_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
     map_tf_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+    odom_robot_tf_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
     // Initialize the odometry message
     odom_msg_.header.frame_id = odom_id;
@@ -192,6 +193,7 @@ private:
   rclcpp::Service<nuslam::srv::InitialPose>::SharedPtr initial_pose_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> odom_tf_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> map_tf_;
+  std::unique_ptr<tf2_ros::TransformBroadcaster> odom_robot_tf_;
   tf2::Quaternion body_quaternion;
   nav_msgs::msg::Odometry odom_msg_;
   nav_msgs::msg::Path path_msg;
@@ -245,23 +247,40 @@ private:
     odom_pub_->publish(odom_msg_);
 
     // publish the robot's transform
-    geometry_msgs::msg::TransformStamped t;
+    geometry_msgs::msg::TransformStamped odom_t;
 
-    t.header.stamp = this->get_clock()->now();
-    t.header = odom_msg_.header;
-    t.child_frame_id = odom_msg_.child_frame_id;
+    odom_t.header.stamp = this->get_clock()->now();
+    odom_t.header = odom_msg_.header;
+    odom_t.child_frame_id = odom_msg_.child_frame_id;
 
-    t.transform.translation.x = odom_msg_.pose.pose.position.x;
-    t.transform.translation.y = odom_msg_.pose.pose.position.y;
-    t.transform.translation.z = 0.0;
+    odom_t.transform.translation.x = odom_msg_.pose.pose.position.x;
+    odom_t.transform.translation.y = odom_msg_.pose.pose.position.y;
+    odom_t.transform.translation.z = 0.0;
 
-    t.transform.rotation.x = body_quaternion.x();
-    t.transform.rotation.y = body_quaternion.y();
-    t.transform.rotation.z = body_quaternion.z();
-    t.transform.rotation.w = body_quaternion.w();
+    odom_t.transform.rotation.x = body_quaternion.x();
+    odom_t.transform.rotation.y = body_quaternion.y();
+    odom_t.transform.rotation.z = body_quaternion.z();
+    odom_t.transform.rotation.w = body_quaternion.w();
 
     // Send the transformation
-    odom_tf_->sendTransform(t);
+    odom_tf_->sendTransform(odom_t);
+
+    // publish world to robot transform
+    geometry_msgs::msg::TransformStamped world_t;
+    world_t.header.stamp = this->get_clock()->now();
+    world_t.header.frame_id = "nusim/world";
+    world_t.child_frame_id = "blue/base_footprint";
+    world_t.transform.translation.x = odom_msg_.pose.pose.position.x;
+    world_t.transform.translation.y = odom_msg_.pose.pose.position.y;
+    world_t.transform.translation.z = 0.0;
+
+    world_t.transform.rotation.x = body_quaternion.x();
+    world_t.transform.rotation.y = body_quaternion.y();
+    world_t.transform.rotation.z = body_quaternion.z();
+    world_t.transform.rotation.w = body_quaternion.w();
+
+    // Send the transformation
+    odom_robot_tf_->sendTransform(world_t);
   }
 
   /// \brief Callback for the fake sensor
@@ -426,17 +445,20 @@ private:
     // Create a transform to hold the robot's configuration
     Transform2D map_tf {{state(1), state(2)}, state(0)};
 
-    // broadcast the robot's map transform
+    // calculate map to odom transform
+    Transform2D map_to_odom_tf = map_tf * nuturtle_.get_robot_config().inv();
+
+    // broadcast the robot's map to odom transform
     geometry_msgs::msg::TransformStamped map_t;
     map_t.header.stamp = this->get_clock()->now();
     map_t.header.frame_id = "map";
-    map_t.child_frame_id = "green/base_footprint";
-    map_t.transform.translation.x = map_tf.translation().x;
-    map_t.transform.translation.y = map_tf.translation().y;
+    map_t.child_frame_id = odom_msg_.header.frame_id;
+    map_t.transform.translation.x = map_to_odom_tf.translation().x;
+    map_t.transform.translation.y = map_to_odom_tf.translation().y;
     map_t.transform.translation.z = 0.0;
 
     // Create a quaternion to hold the rotation of the turtlebot
-    body_quaternion.setRPY(0, 0, map_tf.rotation());
+    body_quaternion.setRPY(0, 0, map_to_odom_tf.rotation());
     map_t.transform.rotation.x = body_quaternion.x();
     map_t.transform.rotation.y = body_quaternion.y();
     map_t.transform.rotation.z = body_quaternion.z();
