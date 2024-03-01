@@ -157,6 +157,19 @@ public:
     nuturtle_ =
       DiffDrive{track_width / 2.0, wheel_radius, {0.0, 0.0}, {{x_tele, y_tele}, theta_tele}};
 
+    // Initialize the covariance matrix
+    // Let the first 3 diagonal elements be 0
+    // The rest of the diagonal elements are set to a large number
+    for (int i = 3; i < STATE_SIZE; i++) {
+      covar(i, i) = 1e9;
+    }
+
+    // Initialize the process noise covariance matrix
+    // Set the diagonal elements to 0.01 (constant value)
+    Q_bar(0, 0) = 0.01;
+    Q_bar(1, 1) = 0.01;
+    Q_bar(2, 2) = 0.01;
+
     // Create timer
     timer_ =
       create_wall_timer(rate, std::bind(&Slam::timer_callback, this));
@@ -179,9 +192,10 @@ private:
   double x_tele, y_tele, theta_tele;
   size_t timer_count_;
   DiffDrive nuturtle_{0.0, 0.0};
-  arma::vec state {STATE_SIZE, arma::fill::zeros}; // slam state
-  arma::mat covar {STATE_SIZE, STATE_SIZE, arma::fill::eye}; // covariance
   WheelConfig prev_wheel_config {}; // previous wheel configuration
+  arma::vec state {STATE_SIZE, arma::fill::zeros}; // slam state
+  arma::mat covar {STATE_SIZE, STATE_SIZE, arma::fill::zeros}; // covariance
+  arma::mat Q_bar {STATE_SIZE, STATE_SIZE, arma::fill::zeros}; // process noise covariance
 
   /// \brief The timer callback
   void timer_callback() {
@@ -261,27 +275,8 @@ private:
     // EKF prediction
     EKF_Slam_predict(state, covar, robot_twist);
 
-     // Create a transform to hold the robot's configuration
-    Transform2D map_tf {{state(1), state(2)}, state(0)};
-
-    // broadcast the robot's map transform
-    geometry_msgs::msg::TransformStamped map_t;
-    map_t.header.stamp = this->get_clock()->now();
-    map_t.header.frame_id = "map";
-    map_t.child_frame_id = "green/base_footprint";
-    map_t.transform.translation.x = map_tf.translation().x;
-    map_t.transform.translation.y = map_tf.translation().y;
-    map_t.transform.translation.z = 0.0;
-
-    // Create a quaternion to hold the rotation of the turtlebot
-    body_quaternion.setRPY(0, 0, map_tf.rotation());
-    map_t.transform.rotation.x = body_quaternion.x();
-    map_t.transform.rotation.y = body_quaternion.y();
-    map_t.transform.rotation.z = body_quaternion.z();
-    map_t.transform.rotation.w = body_quaternion.w();
-
-    // Send the transformation
-    map_tf_->sendTransform(map_t);
+    // Broadcast the map transform
+    map_tf_broadcaster();
 
   }
 
@@ -326,10 +321,34 @@ private:
       A_t = I + A_t;
     }
 
-    covar = A_t * covar * A_t.t();
-
+    covar = A_t * covar * A_t.t() + Q_bar;
   }
   
+  /// \brief Map transform broadcaster
+  void map_tf_broadcaster()
+  {  
+    // Create a transform to hold the robot's configuration
+    Transform2D map_tf {{state(1), state(2)}, state(0)};
+
+    // broadcast the robot's map transform
+    geometry_msgs::msg::TransformStamped map_t;
+    map_t.header.stamp = this->get_clock()->now();
+    map_t.header.frame_id = "map";
+    map_t.child_frame_id = "green/base_footprint";
+    map_t.transform.translation.x = map_tf.translation().x;
+    map_t.transform.translation.y = map_tf.translation().y;
+    map_t.transform.translation.z = 0.0;
+
+    // Create a quaternion to hold the rotation of the turtlebot
+    body_quaternion.setRPY(0, 0, map_tf.rotation());
+    map_t.transform.rotation.x = body_quaternion.x();
+    map_t.transform.rotation.y = body_quaternion.y();
+    map_t.transform.rotation.z = body_quaternion.z();
+    map_t.transform.rotation.w = body_quaternion.w();
+
+    // Send the transformation
+    map_tf_->sendTransform(map_t);
+  }
 
   /// \brief Publishes the path of the turtlebot
   void path_publisher()
