@@ -255,6 +255,8 @@ private:
 
     // Get the robot's twist
     const auto robot_twist = nuturtle_.wheel_twist(wheel_config, prev_wheel_config);
+    // update the previous wheel configuration
+    prev_wheel_config = wheel_config;
 
     // EKF prediction
     EKF_Slam_predict(state, covar, robot_twist);
@@ -290,7 +292,6 @@ private:
   /// \param twist The robot's twist
   void EKF_Slam_predict(arma::vec & state, arma::mat & covar, const Twist2D & twist)
   {
-
     // Create identity matrix of state_size
     arma::mat I = arma::eye<arma::mat>(STATE_SIZE, STATE_SIZE);
 

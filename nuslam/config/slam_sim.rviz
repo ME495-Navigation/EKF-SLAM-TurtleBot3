@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /TF1/Frames1
         - /Path1/Topic1
         - /Odometry1/Shape1
       Splitter Ratio: 0.5
@@ -51,19 +50,105 @@ Visualization Manager:
       Reference Frame: <Fixed Frame>
       Value: true
     - Class: rviz_default_plugins/TF
-      Enabled: false
+      Enabled: true
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        blue/base_footprint:
+          Value: false
+        blue/base_link:
+          Value: false
+        blue/base_scan:
+          Value: false
+        blue/caster_back_link:
+          Value: false
+        blue/imu_link:
+          Value: false
+        blue/wheel_left_link:
+          Value: false
+        blue/wheel_right_link:
+          Value: false
+        green/base_footprint:
+          Value: true
+        green/base_link:
+          Value: false
+        green/base_scan:
+          Value: false
+        green/caster_back_link:
+          Value: false
+        green/imu_link:
+          Value: false
+        green/wheel_left_link:
+          Value: false
+        green/wheel_right_link:
+          Value: false
+        map:
+          Value: true
+        nusim/world:
+          Value: false
+        odom:
+          Value: false
+        red/base_footprint:
+          Value: false
+        red/base_link:
+          Value: false
+        red/base_scan:
+          Value: false
+        red/caster_back_link:
+          Value: false
+        red/imu_link:
+          Value: false
+        red/wheel_left_link:
+          Value: false
+        red/wheel_right_link:
+          Value: false
       Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        nusim/world:
+          map:
+            green/base_footprint:
+              green/base_link:
+                green/base_scan:
+                  {}
+                green/caster_back_link:
+                  {}
+                green/imu_link:
+                  {}
+                green/wheel_left_link:
+                  {}
+                green/wheel_right_link:
+                  {}
+          odom:
+            blue/base_footprint:
+              blue/base_link:
+                blue/base_scan:
+                  {}
+                blue/caster_back_link:
+                  {}
+                blue/imu_link:
+                  {}
+                blue/wheel_left_link:
+                  {}
+                blue/wheel_right_link:
+                  {}
+          red/base_footprint:
+            red/base_link:
+              red/base_scan:
+                {}
+              red/caster_back_link:
+                {}
+              red/imu_link:
+                {}
+              red/wheel_left_link:
+                {}
+              red/wheel_right_link:
+                {}
       Update Interval: 0
-      Value: false
+      Value: true
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
       Collision Enabled: false
@@ -402,7 +487,7 @@ Visualization Manager:
         Inertia: false
         Mass: false
       Name: GreenRobot
-      TF Prefix: red
+      TF Prefix: green
       Update Interval: 0
       Value: true
       Visual Enabled: true
@@ -452,25 +537,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 2.4613616466522217
+      Distance: 2.4379143714904785
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.011678275652229786
-        Y: -0.3244326710700989
-        Z: 0
+        X: 0.7867152690887451
+        Y: 0.39434877038002014
+        Z: 0.8705223798751831
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5597963929176331
+      Pitch: 0.7397966384887695
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz_default_plugins)
-      Yaw: 4.592388153076172
+      Yaw: 3.252387285232544
     Saved: ~
 Window Geometry:
   Displays:
