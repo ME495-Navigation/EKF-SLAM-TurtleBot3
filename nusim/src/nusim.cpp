@@ -70,15 +70,15 @@ using turtlelib::Transform2D;
 using namespace std::chrono_literals;
 
 
-/// \brief A random number generator 
+/// \brief A random number generator
 std::mt19937 & get_random()
 {
-    // static variables inside a function are created once and persist for the remainder of the program
-    static std::random_device rd{}; 
-    static std::mt19937 mt{rd()};
-    // we return a reference to the pseudo-random number genrator object. This is always the
-    // same object every time get_random is called
-    return mt;
+  // static variables inside a function are created once and persist for the remainder of the program
+  static std::random_device rd{};
+  static std::mt19937 mt{rd()};
+  // we return a reference to the pseudo-random number genrator object. This is always the
+  // same object every time get_random is called
+  return mt;
 }
 
 /// \brief Turtlebot simulator.
@@ -210,7 +210,7 @@ public:
     lidar_publisher_ = create_publisher<sensor_msgs::msg::LaserScan>(
       "red/lidar",
       10);
-    
+
     //create a path publisher
     path_publisher_ = create_publisher<nav_msgs::msg::Path>("red/path", 10);
     path_msg.header.frame_id = "nusim/world";
@@ -265,7 +265,8 @@ private:
   double wheel_radius, track_width, motor_cmd_max;
   double motor_cmd_per_rad_sec, encoder_ticks_per_rad, collision_radius;
   double input_noise, slip_fraction, basic_sensor_variance, max_range;
-  double lidar_noise, lidar_range_max, lidar_range_min, lidar_angle_increment, lidar_angle_min, lidar_angle_max, lidar_resolution;
+  double lidar_noise, lidar_range_max, lidar_range_min, lidar_angle_increment, lidar_angle_min,
+    lidar_angle_max, lidar_resolution;
   std::vector<double> obstacles_x{}, obstacles_y{};
   double obstacles_r, sim_timestep;
   WheelVelocities wheel_vels {0.0, 0.0};
@@ -330,12 +331,15 @@ private:
   int detect_collision()
   {
     for (size_t i = 0; i < obstacles_x.size(); i++) {
-      if (distance(x_tele, y_tele, obstacles_x.at(i), obstacles_y.at(i)) < collision_radius + obstacles_r) {
+      if (distance(
+          x_tele, y_tele, obstacles_x.at(i),
+          obstacles_y.at(i)) < collision_radius + obstacles_r)
+      {
         // return the index of the obstacle that the robot has collided with
         return static_cast<int>(i);
       }
     }
-    return -1;    
+    return -1;
   }
 
   /// \brief Update the robot configuration post collision
@@ -363,7 +367,7 @@ private:
     robot_.set_robot_config(robot_pose);
     x_tele = robot_pose.translation().x;
     y_tele = robot_pose.translation().y;
-  }  
+  }
 
   /// \brief Sensor data publisher
   void sensor_data_publisher()
@@ -402,7 +406,8 @@ private:
   }
 
   /// \brief Adds noise to the wheel velocities
-  void add_wheel_vel_noise(){
+  void add_wheel_vel_noise()
+  {
     // define gaussian noise with variance of input_noise
     if (wheel_vels.lw != 0.0 or wheel_vels.rw != 0.0) {
       if (input_noise > 0.0) {
@@ -410,7 +415,7 @@ private:
         wheel_vels.lw += wheel_vel_db(get_random());
         wheel_vels.rw += wheel_vel_db(get_random());
       }
-    }     
+    }
   }
 
   /// \brief Callback for the reset service.
@@ -604,11 +609,10 @@ private:
       fake_ob.header.stamp = rclcpp::Clock().now();
       fake_ob.id = i; // required for data association
       fake_ob.type = visualization_msgs::msg::Marker::CYLINDER;
-      
+
       if (distance(x_tele, y_tele, obstacles_x.at(i), obstacles_y.at(i)) > max_range) {
         fake_ob.action = visualization_msgs::msg::Marker::DELETE;
-      } 
-      else {
+      } else {
         fake_ob.action = visualization_msgs::msg::Marker::ADD;
       }
 
@@ -657,43 +661,54 @@ private:
     world_lidar_transform = robot_.get_robot_config() * base_lidar_transform;
 
     // loop through each lidar laser ray
-    for (double i = lidar_scan.angle_min; i < lidar_scan.angle_max; i += lidar_scan.angle_increment) {
+    for (double i = lidar_scan.angle_min; i < lidar_scan.angle_max;
+      i += lidar_scan.angle_increment)
+    {
       // calculate the start and end points of the lidar scan
       // add the base_lidar_transform to the start point to account for frame offser
       // between base_footprint and base_scan
       double x_start = world_lidar_transform.translation().x;
-      double y_start = world_lidar_transform.translation().y; 
+      double y_start = world_lidar_transform.translation().y;
       double theta = world_lidar_transform.rotation();
-      double x_end = x_start + lidar_range_max * std::cos(theta + i);;
+      double x_end = x_start + lidar_range_max * std::cos(theta + i);
       double y_end = y_start + lidar_range_max * std::sin(theta + i);
       // calculate the intersection points of the lidar scan with the obstacles and walls
-      std::vector<double> obs_intersection_points = lidar_obstacle_intersection(x_start, y_start, x_end, y_end);
-      std::vector<double> wall_intersection_points = lidar_wall_intersection(x_start, y_start, x_end, y_end);
+      std::vector<double> obs_intersection_points = lidar_obstacle_intersection(
+        x_start, y_start,
+        x_end, y_end);
+      std::vector<double> wall_intersection_points = lidar_wall_intersection(
+        x_start, y_start,
+        x_end, y_end);
       // concatenate the intersection points
       std::vector<double> intersection_points;
-      intersection_points.insert(intersection_points.end(), obs_intersection_points.begin(), obs_intersection_points.end());
-      intersection_points.insert(intersection_points.end(), wall_intersection_points.begin(), wall_intersection_points.end());
-      
+      intersection_points.insert(
+        intersection_points.end(),
+        obs_intersection_points.begin(), obs_intersection_points.end());
+      intersection_points.insert(
+        intersection_points.end(),
+        wall_intersection_points.begin(), wall_intersection_points.end());
+
       if (intersection_points.size() >= 2) {
         // calculate the closest intersection point to the start of the line
         // the first two intersection points are the closest
         for (size_t i = 0; i < intersection_points.size(); i += 2) {
-          if (distance(x_start, y_start, intersection_points.at(i), intersection_points.at(i + 1)) < 
-          distance(x_start, y_start, intersection_points.at(0), intersection_points.at(1))) {
+          if (distance(x_start, y_start, intersection_points.at(i), intersection_points.at(i + 1)) <
+            distance(x_start, y_start, intersection_points.at(0), intersection_points.at(1)))
+          {
             intersection_points.at(0) = intersection_points.at(i);
             intersection_points.at(1) = intersection_points.at(i + 1);
           }
         }
-        double range = distance(x_start, y_start, intersection_points.at(0), intersection_points.at(1));
+        double range =
+          distance(x_start, y_start, intersection_points.at(0), intersection_points.at(1));
         // add noise to the lidar scan
         range += lidar_db(get_random());
         // limit resolution of the lidar scan
         if (lidar_resolution > 0.0) {
           range = std::round(range / lidar_resolution) * lidar_resolution;
         }
-        lidar_scan.ranges.push_back(range);   
-      }
-      else {
+        lidar_scan.ranges.push_back(range);
+      } else {
         lidar_scan.ranges.push_back(0.0);
       }
     }
@@ -705,7 +720,9 @@ private:
   /// \param y_start The y coordinate of the start of the lidar scan
   /// \param x_end The x coordinate of the end of the lidar scan
   /// \param y_end The y coordinate of the end of the lidar scan
-  std::vector<double> lidar_obstacle_intersection(double x_start, double y_start, double x_end, double y_end)
+  std::vector<double> lidar_obstacle_intersection(
+    double x_start, double y_start, double x_end,
+    double y_end)
   {
     std::vector<double> intersection_points;
     double m, b, cx, cy;
@@ -724,8 +741,9 @@ private:
         double x_int = (cx + m * cy - m * b) / (1 + std::pow(m, 2));
         double y_int = m * x_int + b;
         // check if the intersection point is within the line segment
-        if (x_int < std::max(x_start, x_end) and x_int > std::min(x_start, x_end) and
-          y_int < std::max(y_start, y_end) and y_int > std::min(y_start, y_end)) {  
+        if (x_int<std::max(x_start, x_end) and x_int> std::min(x_start, x_end) and
+          y_int<std::max(y_start, y_end) and y_int> std::min(y_start, y_end))
+        {
           // calculate the distance from the perpendicular line intersection to the intersection points
           double d = std::sqrt(std::pow(obstacles_r, 2) - std::pow(p_dist, 2));
           // calculate the intersection points
@@ -747,8 +765,9 @@ private:
     if (intersection_points.size() > 2) {
       // calculate the closest intersection point to the start of the line
       for (size_t i = 0; i < intersection_points.size(); i += 2) {
-        if (distance(x_start, y_start, intersection_points.at(i), intersection_points.at(i + 1)) < 
-        distance(x_start, y_start, intersection_points.at(0), intersection_points.at(1))) {
+        if (distance(x_start, y_start, intersection_points.at(i), intersection_points.at(i + 1)) <
+          distance(x_start, y_start, intersection_points.at(0), intersection_points.at(1)))
+        {
           intersection_points.at(0) = intersection_points.at(i);
           intersection_points.at(1) = intersection_points.at(i + 1);
         }
@@ -767,7 +786,9 @@ private:
   /// \param y_start The y coordinate of the start of the lidar scan
   /// \param x_end The x coordinate of the end of the lidar scan
   /// \param y_end The y coordinate of the end of the lidar scan
-  std::vector<double> lidar_wall_intersection(double x_start, double y_start, double x_end, double y_end)
+  std::vector<double> lidar_wall_intersection(
+    double x_start, double y_start, double x_end,
+    double y_end)
   {
     // check for intersection of the lidar scan with the walls
     std::vector<double> intersection_points;
@@ -777,40 +798,45 @@ private:
     b = y_start - m * x_start;
     // check for intersection with the north wall
     double x_north_int = (arena_y / 2.0 - b) / m;
-    if (x_north_int < arena_x / 2.0 and x_north_int > -arena_x / 2.0) {
+    if (x_north_int<arena_x / 2.0 and x_north_int>-arena_x / 2.0) {
       // check if point is within the line segment
-      if (x_north_int < std::max(x_start, x_end) and x_north_int > std::min(x_start, x_end) and
-        arena_y / 2.0 < std::max(y_start, y_end) and arena_y / 2.0 > std::min(y_start, y_end)) {
+      if (x_north_int<std::max(x_start, x_end) and x_north_int> std::min(x_start, x_end) and
+        arena_y / 2.0 < std::max(y_start, y_end) and arena_y / 2.0 > std::min(y_start, y_end))
+      {
         intersection_points.push_back(x_north_int);
         intersection_points.push_back(arena_y / 2.0);
       }
     }
     // check for intersection with the south wall
     double x_south_int = (-arena_y / 2.0 - b) / m;
-    if (x_south_int < arena_x / 2.0 and x_south_int > -arena_x / 2.0) {
+    if (x_south_int<arena_x / 2.0 and x_south_int>-arena_x / 2.0) {
       // check if point is within the line segment
-      if (x_south_int < std::max(x_start, x_end) and x_south_int > std::min(x_start, x_end) and
-        -arena_y / 2.0 < std::max(y_start, y_end) and -arena_y / 2.0 > std::min(y_start, y_end)) {
+      if (x_south_int<std::max(x_start, x_end) and x_south_int> std::min(x_start, x_end) and -
+        arena_y / 2.0 < std::max(y_start, y_end) and - arena_y / 2.0 > std::min(y_start, y_end))
+      {
         intersection_points.push_back(x_south_int);
         intersection_points.push_back(-arena_y / 2.0);
       }
     }
     // check for intersection with the east wall
     double y_east_int = m * (arena_x / 2.0) + b;
-    if (y_east_int < arena_y / 2.0 and y_east_int > -arena_y / 2.0) {
+    if (y_east_int<arena_y / 2.0 and y_east_int>-arena_y / 2.0) {
       // check if point is within the line segment
       if (arena_x / 2.0 < std::max(x_start, x_end) and arena_x / 2.0 > std::min(x_start, x_end) and
-        y_east_int < std::max(y_start, y_end) and y_east_int > std::min(y_start, y_end)) {
+        y_east_int<std::max(y_start, y_end) and y_east_int> std::min(y_start, y_end))
+      {
         intersection_points.push_back(arena_x / 2.0);
         intersection_points.push_back(y_east_int);
       }
     }
     // check for intersection with the west wall
     double y_west_int = m * (-arena_x / 2.0) + b;
-    if (y_west_int < arena_y / 2.0 and y_west_int > -arena_y / 2.0) {
+    if (y_west_int<arena_y / 2.0 and y_west_int>-arena_y / 2.0) {
       // check if point is within the line segment
-      if (-arena_x / 2.0 < std::max(x_start, x_end) and -arena_x / 2.0 > std::min(x_start, x_end) and
-        y_west_int < std::max(y_start, y_end) and y_west_int > std::min(y_start, y_end)) {
+      if (-arena_x / 2.0 <
+        std::max(x_start, x_end) and - arena_x / 2.0 > std::min(x_start, x_end) and
+        y_west_int<std::max(y_start, y_end) and y_west_int> std::min(y_start, y_end))
+      {
         intersection_points.push_back(-arena_x / 2.0);
         intersection_points.push_back(y_west_int);
       }
@@ -822,7 +848,7 @@ private:
     }
     return intersection_points;
   }
-  
+
   /// \brief Calculate the distance between two points
   /// \param x1 The x coordinate of the first point
   /// \param y1 The y coordinate of the first point

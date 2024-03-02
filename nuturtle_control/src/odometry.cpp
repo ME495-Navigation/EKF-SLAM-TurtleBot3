@@ -164,7 +164,8 @@ private:
   DiffDrive nuturtle_{0.0, 0.0};
 
   /// \brief The timer callback
-  void timer_callback() {
+  void timer_callback()
+  {
     timer_count_++;
     path_publisher();
   }

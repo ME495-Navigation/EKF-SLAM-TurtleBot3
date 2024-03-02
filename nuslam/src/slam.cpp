@@ -53,8 +53,10 @@ using turtlelib::almost_equal;
 using namespace std::chrono_literals;
 
 // Constants
-constexpr int MAX_OBSTACLES = 30; // Maximum number of obstacles
-constexpr int STATE_SIZE = MAX_OBSTACLES * 2 + 3; // State size for the EKF
+/// \brief Maximum number of obstacles
+constexpr int MAX_OBSTACLES = 30;
+/// \brief State size for the EKF
+constexpr int STATE_SIZE = MAX_OBSTACLES * 2 + 3;
 
 /// \brief Slam node for the turtlebot.
 class Slam : public rclcpp::Node
@@ -127,7 +129,7 @@ public:
       std::bind(
         &Slam::joint_state_callback, this,
         std::placeholders::_1));
-    
+
     // create subcriber to the fake sensor topic
     fake_sensor_sub_ = create_subscription<visualization_msgs::msg::MarkerArray>(
       "fake_sensor", 10,
@@ -146,7 +148,8 @@ public:
     map_path_msg.header.frame_id = "map";
 
     // create a publisher for the map obstacles
-    map_obs_publisher_ = create_publisher<visualization_msgs::msg::MarkerArray>("map_obstacles", 10);
+    map_obs_publisher_ =
+      create_publisher<visualization_msgs::msg::MarkerArray>("map_obstacles", 10);
 
     // Create services
     initial_pose_ = create_service<nuslam::srv::InitialPose>(
@@ -224,7 +227,8 @@ private:
   double obstacles_r;
 
   /// \brief The timer callback
-  void timer_callback() {
+  void timer_callback()
+  {
     timer_count_++;
     odom_path_publisher();
     map_path_publisher();
@@ -316,7 +320,7 @@ private:
     EKF_Slam_predict(state, covar, robot_twist);
 
     // iterate through each marker in the fake sensor message
-    for (size_t i=0; i < msg->markers.size(); i++) {
+    for (size_t i = 0; i < msg->markers.size(); i++) {
 
       // Check if the marker is marked for deletion
       if (msg->markers[i].action == visualization_msgs::msg::Marker::DELETE) {
@@ -358,24 +362,24 @@ private:
     } else {
       // if the angular component is non-zero
       state(1) += (twist.x / twist.omega) * (std::sin(state(0) + twist.omega) - std::sin(state(0)));
-      state(2) += (twist.x / twist.omega) * (-std::cos(state(0) + twist.omega) + std::cos(state(0)));
+      state(2) += (twist.x / twist.omega) *
+        (-std::cos(state(0) + twist.omega) + std::cos(state(0)));
       state(0) += twist.omega;
     }
 
     // Update the covariance
     // Initialize the A_t matrix
-    arma::mat A_t (STATE_SIZE, STATE_SIZE, arma::fill::zeros);
+    arma::mat A_t(STATE_SIZE, STATE_SIZE, arma::fill::zeros);
     // check if angular component of twist is zero
-    if (almost_equal(twist.omega, 0.0)){
+    if (almost_equal(twist.omega, 0.0)) {
       // if the angular component is zero
-      A_t(1,0) = -twist.x * std::sin(state(0));
-      A_t(2,0) = twist.x * std::cos(state(0));
+      A_t(1, 0) = -twist.x * std::sin(state(0));
+      A_t(2, 0) = twist.x * std::cos(state(0));
       A_t = I + A_t;
-    }
-    else{
+    } else {
       // if the angular component is non-zero
-      A_t(1,0) = (twist.x / twist.omega) * (std::cos(state(0) + twist.omega) - std::cos(state(0)));
-      A_t(2,0) = (twist.x / twist.omega) * (std::sin(state(0) + twist.omega) - std::sin(state(0)));
+      A_t(1, 0) = (twist.x / twist.omega) * (std::cos(state(0) + twist.omega) - std::cos(state(0)));
+      A_t(2, 0) = (twist.x / twist.omega) * (std::sin(state(0) + twist.omega) - std::sin(state(0)));
       A_t = I + A_t;
     }
 
@@ -420,11 +424,13 @@ private:
     const auto delta_y = state(marker_index + 1) - state(2);
     const auto d = std::pow(delta_x, 2) + std::pow(delta_y, 2); // squared distance
     // Construct the theoretical measurement
-    arma::vec z_hat = {std::sqrt(d), turtlelib::normalize_angle(std::atan2(delta_y, delta_x) - state(0))};
+    arma::vec z_hat = {std::sqrt(d), turtlelib::normalize_angle(
+        std::atan2(delta_y, delta_x) - state(
+          0))};
 
     // Compute the measurement model jacobian
     // Initialize the H matrix
-    arma::mat H (2, STATE_SIZE, arma::fill::zeros);
+    arma::mat H(2, STATE_SIZE, arma::fill::zeros);
     H(1, 0) = -1;
     H(0, 1) = -delta_x / std::sqrt(d);
     H(0, 2) = -delta_y / std::sqrt(d);
@@ -449,10 +455,10 @@ private:
     const auto I = arma::eye<arma::mat>(STATE_SIZE, STATE_SIZE);
     covar = (I - K * H) * covar;
   }
-  
+
   /// \brief Map transform broadcaster
   void map_tf_broadcaster()
-  {  
+  {
     // Create a transform to hold the robot's configuration
     Transform2D map_tf {{state(1), state(2)}, state(0)};
 
