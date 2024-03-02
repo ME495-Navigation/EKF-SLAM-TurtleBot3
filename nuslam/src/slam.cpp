@@ -505,10 +505,14 @@ private:
 
     path_msg.poses.push_back(pose_stamp);
 
+// ############################## Begin_Citation [9] ##############################
+
     // check if the path message is too long
     if (path_msg.poses.size() > 5000) {
       path_msg.poses.erase(path_msg.poses.begin());
     }
+
+// ############################## End_Citation [9] ################################
 
     odom_path_publisher_->publish(path_msg);
   }
