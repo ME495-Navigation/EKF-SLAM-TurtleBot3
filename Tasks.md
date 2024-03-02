@@ -27,6 +27,7 @@ Task C.7
 Task C.9
 Task C.10
 Task C.11
+Task C.12
 Task D.1
 Task D.2
 Task D.3
@@ -39,3 +40,8 @@ Task F.1
 Task F.2
 Task F.5
 Task F.6
+Task V.1
+Task V.2
+Task V.4
+Task L.1
+Task L.2
