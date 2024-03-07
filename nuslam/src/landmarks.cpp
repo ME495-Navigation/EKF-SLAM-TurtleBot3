@@ -11,6 +11,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
 
 // constants
 /// \brief The minimum distance between two points to be considered part of the same cluster
@@ -30,15 +31,20 @@ class landmarks : public rclcpp::Node
       laser_scan_data_ = create_subscription<sensor_msgs::msg::LaserScan>(
         "red/lidar", 10, std::bind(&landmarks::laser_scan_callback, this, std::placeholders::_1));
 
+      // create a publisher to visualize the clusters
+      cluster_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("clusters", 10);
     }
 
   private:
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_data_;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr cluster_pub_;
 
     /// \brief Callback function for the laser scan data
     /// \param msg The laser scan data
     void laser_scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
     {
+      // detect clusters in the laser scan data
+      detect_clusters(msg);
     }
 
     /// \brief Detect clusters of points in the laser scan data
@@ -90,9 +96,53 @@ class landmarks : public rclcpp::Node
           clusters.push_back(cluster);
         } 
       }
+      // publish the clusters as markers
+      publish_cluster_markers(clusters);
     }
 
+    /// \brief Publish the clusters as markers
+    /// \param clusters The clusters to be published
+    void publish_cluster_markers(const std::vector<std::vector<std::vector<double>>> & clusters)
+    {
+      // create a marker array
+      visualization_msgs::msg::MarkerArray marker_array;
 
+      // iterate through the clusters
+      for (size_t i=0; i<clusters.size(); i++)
+      {
+        // create a marker for each cluster
+        visualization_msgs::msg::Marker marker;
+        marker.header.frame_id = "red/base_scan";
+        marker.header.stamp = rclcpp::Clock().now();
+        marker.ns = "landmarks";
+        marker.id = i;
+        marker.type = visualization_msgs::msg::Marker::POINTS;
+        marker.action = visualization_msgs::msg::Marker::ADD;
+        marker.pose.orientation.w = 1.0;
+        marker.scale.x = 0.01;
+        marker.scale.y = 0.01;
+        marker.color.r = 1.0;
+        marker.color.a = 1.0;
+
+// ############################## Begin_Citation [10] ##############################
+        // iterate through the points in the cluster
+        for (size_t j=0; j<clusters[i].size(); j++)
+        {
+          // create a point for each point in the cluster
+          geometry_msgs::msg::Point point;
+          point.x = clusters[i][j][0];
+          point.y = clusters[i][j][1];
+          point.z = 0;
+          marker.points.push_back(point);
+        }
+// ############################## End_Citation [10] ################################
+        // add the marker to the marker array
+        marker_array.markers.push_back(marker);
+      }
+
+      // publish the marker array
+      cluster_pub_->publish(marker_array);
+    }
 };
 
 /// \brief The main fucntion.

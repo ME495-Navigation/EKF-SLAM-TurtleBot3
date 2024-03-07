@@ -24,3 +24,4 @@ Other citations:
 [7] https://www.youtube.com/watch?v=E-6paM_Iwfc - EKF SLAM explanation video
 [8] https://www.youtube.com/playlist?list=PLX2gX-ftPVXU3oUFNATxGXY90AULiqnWT - Kalman Filter playlist
 [9] https://github.com/ngmor/turtlebot3-ekf-slam/blob/main/nuslam/src/nuslam.cpp - Limiting size of path msg to remove simulation lag + minor slam code structuring cues
+[10] Github Copilot. Used on 3/6/2024. Commit prior to use is 11dafdbbb6ac33a5f1540116b5fbe25ef4f41606
