@@ -31,8 +31,12 @@ class landmarks : public rclcpp::Node
       laser_scan_data_ = create_subscription<sensor_msgs::msg::LaserScan>(
         "red/lidar", 10, std::bind(&landmarks::laser_scan_callback, this, std::placeholders::_1));
 
+      // Set QoS settings for the Marker topic
+      rclcpp::QoS qos(rclcpp::KeepLast(10));
+      qos.transient_local();
+
       // create a publisher to visualize the clusters
-      cluster_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("clusters", 10);
+      cluster_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("clusters", qos);
     }
 
   private:
@@ -44,13 +48,16 @@ class landmarks : public rclcpp::Node
     void laser_scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
     {
       // detect clusters in the laser scan data
-      detect_clusters(msg);
+      std::vector<std::vector<std::vector<double>>> clusters = detect_clusters(msg);
+
+      // publish the clusters as markers
+      publish_cluster_markers(clusters);
     }
 
     /// \brief Detect clusters of points in the laser scan data
     /// \param msg The laser scan data
     /// \return A vector of detected clusters
-    void detect_clusters(const sensor_msgs::msg::LaserScan::SharedPtr msg)
+    std::vector<std::vector<std::vector<double>>> detect_clusters(const sensor_msgs::msg::LaserScan::SharedPtr msg)
     {
       //create a vector of the clusters
       std::vector<std::vector<std::vector<double>>> clusters;
@@ -70,34 +77,97 @@ class landmarks : public rclcpp::Node
         coordinates.push_back(point);
       }
 
+      // create a vector to store the cluster
+      std::vector<std::vector<double>> cluster;
+      // add the first point to the cluster
+      cluster.push_back(coordinates[0]);
+
       // iterate through the coordinates
-      // calculate distance between each point and every other point
-      for (size_t i=0; i<coordinates.size(); i++)
+      for (size_t i=0; i<coordinates.size()-1; i++)
       {
-        // create a vector to store the cluster
-        std::vector<std::vector<double>> cluster;
+        // calculate the distance to the next point
+        double dist = distance(coordinates[i][0], coordinates[i][1], coordinates[i+1][0], coordinates[i+1][1]);
 
-        for (size_t j=i; j<coordinates.size(); j++)
+        // if the distance is less than the threshold, add the point to the cluster
+        if (dist < DISTANCE_THRESH && dist > 0.0)
         {
-          // calculate the distance between the two points
-          double distance = sqrt(pow(coordinates[i][0] - coordinates[j][0], 2) + pow(coordinates[i][1] - coordinates[j][1], 2));
-
-          // if the distance is less than the threshold, add the point to the cluster
-          if (distance < DISTANCE_THRESH)
-          {
-            cluster.push_back(coordinates[j]);
-          }
+          cluster.push_back(coordinates[i+1]);
         }
-
-        // check if the size of the cluster is greater than minimum cluster size
-        if (cluster.size() > MIN_CLUSTER_SIZE)
+        else
         {
-          // add the cluster to the vector of clusters
-          clusters.push_back(cluster);
-        } 
+          // check if the size of the cluster is greater than minimum cluster size
+          if (cluster.size() > MIN_CLUSTER_SIZE)
+          {
+            // add the cluster to the vector of clusters
+            clusters.push_back(cluster);
+          }
+          // clear the cluster
+          cluster.clear();
+          // add the next point to the cluster
+          cluster.push_back(coordinates[i+1]);
+        }
       }
-      // publish the clusters as markers
-      publish_cluster_markers(clusters);
+
+      // At this stage, the cluster variable contains either the last point or the last cluster
+      // check for wrap around
+      // calculate the distance between the last and first points
+      double dist = distance(coordinates[coordinates.size()-1][0], coordinates[coordinates.size()-1][1], coordinates[0][0], coordinates[0][1]);
+      // log the wrap around distance
+      RCLCPP_INFO(this->get_logger(), "Wrap around distance: %f", dist);
+      // log the coordinates of the last and first points
+      RCLCPP_INFO(this->get_logger(), "Last point: %f, %f", coordinates[coordinates.size()-1][0], coordinates[coordinates.size()-1][1]);
+      RCLCPP_INFO(this->get_logger(), "First point: %f, %f", coordinates[0][0], coordinates[0][1]);
+
+      // if the distance is less than the threshold, add the first point to the cluster
+      if (dist < DISTANCE_THRESH && dist > 0.0)
+      {
+        cluster.push_back(coordinates[0]);
+      }
+
+      // iterate through the coordinates till a break is found
+      for (size_t i=0; i<coordinates.size()-1; i++)
+      {
+        // calculate the distance to the next point
+        double dist = distance(coordinates[i][0], coordinates[i][1], coordinates[i+1][0], coordinates[i+1][1]);
+
+        // if the distance is less than the threshold, add the point to the cluster
+        if (dist < DISTANCE_THRESH && dist > 0.0)
+        {
+          cluster.push_back(coordinates[i+1]);
+        }
+        else
+        {
+          // check if the size of the cluster is greater than minimum cluster size
+          if (cluster.size() > MIN_CLUSTER_SIZE)
+          {
+            // add the cluster to the vector of clusters
+            clusters.push_back(cluster);
+          }
+          // clear the cluster
+          cluster.clear();
+          // break the loop
+          break;    
+        }
+      }
+
+      // check if there is overlap between the last and first clusters
+      // check if the last points of both clusters are the same
+      double x0 = clusters[clusters.size()-1][clusters[clusters.size()-1].size()-1][0];
+      double y0 = clusters[clusters.size()-1][clusters[clusters.size()-1].size()-1][1];
+      double x1 = clusters[0][0][0];
+      double y1 = clusters[0][0][1];
+
+      if (x0 == x1 && y0 == y1)
+      {
+        // log the removal
+        RCLCPP_INFO(this->get_logger(), "Removing the first cluster");
+        // remove the first cluster
+        clusters.erase(clusters.begin());
+      }
+    
+    // log the clusters size
+    // RCLCPP_INFO(this->get_logger(), "Number of clusters: %ld", clusters.size());
+    return clusters;
     }
 
     /// \brief Publish the clusters as markers
@@ -142,6 +212,17 @@ class landmarks : public rclcpp::Node
 
       // publish the marker array
       cluster_pub_->publish(marker_array);
+    }
+
+    /// \brief Calculate the distance between two points
+    /// \param x1 The x coordinate of the first point
+    /// \param y1 The y coordinate of the first point
+    /// \param x2 The x coordinate of the second point
+    /// \param y2 The y coordinate of the second point
+    /// \return The distance between the two points
+    double distance(double x1, double y1, double x2, double y2)
+    {
+      return std::sqrt(std::pow(x2 - x1, 2) + std::pow(y2 - y1, 2));
     }
 };
 

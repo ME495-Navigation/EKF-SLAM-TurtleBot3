@@ -665,7 +665,7 @@ private:
       i += lidar_scan.angle_increment)
     {
       // calculate the start and end points of the lidar scan
-      // add the base_lidar_transform to the start point to account for frame offser
+      // add the base_lidar_transform to the start point to account for frame offset
       // between base_footprint and base_scan
       double x_start = world_lidar_transform.translation().x;
       double y_start = world_lidar_transform.translation().y;
@@ -676,17 +676,17 @@ private:
       std::vector<double> obs_intersection_points = lidar_obstacle_intersection(
         x_start, y_start,
         x_end, y_end);
-      std::vector<double> wall_intersection_points = lidar_wall_intersection(
-        x_start, y_start,
-        x_end, y_end);
+      // std::vector<double> wall_intersection_points = lidar_wall_intersection(
+      //   x_start, y_start,
+      //   x_end, y_end);
       // concatenate the intersection points
       std::vector<double> intersection_points;
       intersection_points.insert(
         intersection_points.end(),
         obs_intersection_points.begin(), obs_intersection_points.end());
-      intersection_points.insert(
-        intersection_points.end(),
-        wall_intersection_points.begin(), wall_intersection_points.end());
+      // intersection_points.insert(
+      //   intersection_points.end(),
+      //   wall_intersection_points.begin(), wall_intersection_points.end());
 
       if (intersection_points.size() >= 2) {
         // calculate the closest intersection point to the start of the line
