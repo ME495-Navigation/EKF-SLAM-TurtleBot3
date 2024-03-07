@@ -37,8 +37,13 @@ nuturtlebot_msgs nav_msgs tf2_ros tf2 visualization_msgs turtlelib)
 target_link_libraries(slam turtlelib::turtlelib ${ARMADILLO_LIBRARIES})
 target_link_libraries(slam "${cpp_typesupport_target}")
 
+add_executable(landmarks src/landmarks.cpp)
+ament_target_dependencies(landmarks rclcpp std_msgs std_srvs geometry_msgs sensor_msgs
+nuturtlebot_msgs nav_msgs tf2_ros tf2 visualization_msgs turtlelib)
+target_link_libraries(landmarks turtlelib::turtlelib ${ARMADILLO_LIBRARIES})
+
 install(TARGETS
-slam
+slam landmarks
 DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
