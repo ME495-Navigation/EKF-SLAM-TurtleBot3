@@ -78,11 +78,27 @@ install(DIRECTORY
         config
         launch
         srv
-        # tests
+        tests
         DESTINATION share/${PROJECT_NAME}/)
 
 if(NOT CMAKE_BUILD_TYPE)        # If no build type is set, set one
   set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Type of build." FORCE)
+endif()
+
+include(CTest)
+
+if(BUILD_TESTING)
+    # Find the Unit testing framework. In this example, Catch2
+    find_package(Catch2 3 REQUIRED)
+
+    # A test is just an executable that is linked against the unit testing library
+    add_executable(circle_fit_test tests/circle_tests.cpp)
+
+    target_link_libraries(circle_fit_test ${ARMADILLO_LIBRARIES} Catch2::Catch2WithMain)
+
+    # register the test with CTest, telling it what executable to run
+    add_test(NAME circle_fit_test COMMAND circle_fit_test)
+
 endif()
 
 ament_package()
