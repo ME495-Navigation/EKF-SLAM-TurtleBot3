@@ -276,8 +276,55 @@ class landmarks : public rclcpp::Node
         arma::mat V;
         arma::svd(U, s, V, Z);
 
-        // print the singular value vector
-        std::cout << "Singular value vector: " << s << std::endl;
+        // initilaize the A vector
+        arma::vec A(4, arma::fill::ones);
+
+        // check if the value of the smallest singular value
+        // is less than 10^-12
+        if (s(s.size()-1) < 1e-12)
+        {
+          // set the A vector to the last column of V
+          A = V.col(V.n_cols-1);
+        }
+        else
+        {
+          // compute the Y matrix
+          arma::mat Y = V * arma::diagmat(s) * V.t();
+
+          // compute the Q vector
+          arma::mat Q = Y * H_inv * Y;
+
+          // compute the eigenvalues and eigenvectors of Q
+          arma::vec eigval;
+          arma::mat eigvec;
+          arma::eig_sym(eigval, eigvec, Q);
+
+          // initialize the A_hat vector
+          arma::vec A_hat(4, arma::fill::ones);
+
+          // find the eigenvector corresponding to the smallest eigenvalue
+          // sort the eigenvalues
+          arma::vec sorted_eigval = arma::sort(eigval);
+          for (size_t j=0; j < sorted_eigval.size(); j++)
+          {
+            if (eigval(j) > 0)
+            {
+              A_hat = eigvec.col(j);
+              break;
+            }
+          }
+
+          // compute the A vector
+          A = Y.i() * A_hat;
+        }
+
+        // compute the center and radius of the circle
+        double x_center = -A(1) / (2*A(0)) + x_mean;
+        double y_center = -A(2) / (2*A(0)) + y_mean;
+        double radius = std::sqrt((std::pow(A(1), 2) + std::pow(A(2), 2) - 4*A(0)*A(3)) / (4*std::pow(A(0), 2)));
+
+        // log the center and radius of the circle
+        RCLCPP_INFO(this->get_logger(), "Center: (%f, %f), Radius: %f", x_center, y_center, radius);
       }
     }
 
