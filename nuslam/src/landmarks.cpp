@@ -75,25 +75,13 @@ class landmarks : public rclcpp::Node
         // store the x and y coordinates in a vector
         std::vector<double> point = {x, y};
         coordinates.push_back(point);
-
-
-        // log if the point is 0,0
-        if (x == 0 && y == 0 && i == 0)
-        {
-          // log the zero point and the index
-          RCLCPP_INFO(this->get_logger(), "Zero point: Index: %ld, range: %f", i, msg->ranges[i]);
-        }
       }
 
       // create a vector to store the cluster
       std::vector<std::vector<double>> cluster;
       // add the first point to the cluster
       cluster.push_back(coordinates[0]);
-      // add the first point to the cluster if it is not 0,0
-      // if (coordinates[0][0] != 0 && coordinates[0][1] != 0)
-      // {
-      //   cluster.push_back(coordinates[0]);
-      // }
+
       // iterate through the coordinates
       for (size_t i=0; i<coordinates.size()-1; i++)
       {
@@ -165,7 +153,7 @@ class landmarks : public rclcpp::Node
       }
 
       // check if number of clusters is greater than 0
-      if (clusters.size() > 0)
+      if (clusters.size() > 1)
       {
         // check if there is overlap between the last and first clusters
         // check if the last points of both clusters are the same
@@ -177,7 +165,7 @@ class landmarks : public rclcpp::Node
         if (x0 == x1 && y0 == y1)
         {
           // log the removal
-          // RCLCPP_INFO(this->get_logger(), "Removing the first cluster");
+          RCLCPP_INFO(this->get_logger(), "Removing the first cluster");
           // remove the first cluster
           clusters.erase(clusters.begin());
         }
