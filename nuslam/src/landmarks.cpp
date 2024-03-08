@@ -52,6 +52,9 @@ class landmarks : public rclcpp::Node
 
       // publish the clusters as markers
       publish_cluster_markers(clusters);
+
+      // fit circles to the clusters
+      circle_fit(clusters);
     }
 
     /// \brief Detect clusters of points in the laser scan data
@@ -197,6 +200,85 @@ class landmarks : public rclcpp::Node
     // log the clusters size
     RCLCPP_INFO(this->get_logger(), "Number of clusters: %ld", clusters.size());
     return clusters;
+    }
+
+    /// \brief Circle fitting algorithm
+    /// \param clusters The clusters to be fitted
+    /// \return The center and radius of the fitted circle
+    void circle_fit(const std::vector<std::vector<std::vector<double>>> & clusters)
+    {
+      // process each cluster separately
+      for (size_t i=0; i < clusters.size(); i++)
+      {
+        // find the mean of the x coordinates
+        double x_mean = 0;
+        for (size_t j=0; j < clusters[i].size(); j++)
+        {
+          x_mean += clusters[i][j][0];
+        }
+        x_mean /= clusters[i].size();
+
+        // find the mean of the y coordinates
+        double y_mean = 0;
+        for (size_t j=0; j < clusters[i].size(); j++)
+        {
+          y_mean += clusters[i][j][1];
+        }
+        y_mean /= clusters[i].size();
+
+        // shift the coordinates so that centroid is at the origin
+        std::vector<std::vector<double>> shifted_coordinates;
+        for (size_t j=0; j < clusters[i].size(); j++)
+        {
+          std::vector<double> point = {clusters[i][j][0] - x_mean, clusters[i][j][1] - y_mean};
+          shifted_coordinates.push_back(point);
+        }
+
+        // compute z_i
+        std::vector<double> z_i;
+        for (size_t j=0; j < shifted_coordinates.size(); j++)
+        {
+          z_i.push_back(std::pow(shifted_coordinates[j][0], 2) + std::pow(shifted_coordinates[j][1], 2));
+        }
+
+        // compute the mean of z_i
+        double z_mean = 0;
+        for (size_t j=0; j < z_i.size(); j++)
+        {
+          z_mean += z_i[j];
+        }
+        z_mean /= z_i.size();
+
+        // form the data matrix Z
+        arma::mat Z(shifted_coordinates.size(), 4, arma::fill::ones);
+        // make the first column equal to z_i
+        // make second and third columns equal to x_i and y_i
+        for (size_t j=0; j < z_i.size(); j++)
+        {
+          Z(j, 0) = z_i[j];
+          Z(j, 1) = shifted_coordinates[j][0];
+          Z(j, 2) = shifted_coordinates[j][1];
+        }
+
+        // form the moment matrix M
+        arma::mat M = Z.t() * Z;
+        M /= clusters[i].size();
+
+        // form the constraint matrix H
+        arma::mat H = {{8*z_mean, 0, 0, 2}, {0, 1, 0, 0}, {0, 0, 1, 0}, {2, 0, 0, 0}};
+
+        // compute H inverse
+        arma::mat H_inv = H.i();
+
+        // compute the svd of Z
+        arma::mat U;
+        arma::vec s;
+        arma::mat V;
+        arma::svd(U, s, V, Z);
+
+        // print the singular value vector
+        std::cout << "Singular value vector: " << s << std::endl;
+      }
     }
 
     /// \brief Publish the clusters as markers
