@@ -8,7 +8,8 @@ Panels:
         - /Status1
         - /RedPath1/Topic1
         - /Odometry1/Shape1
-        - /MarkerArray1/Topic1
+        - /Clusters1/Topic1
+        - /FitCircles1/Topic1
       Splitter Ratio: 0.5
     Tree Height: 663
   - Class: rviz_common/Selection
@@ -189,17 +190,17 @@ Visualization Manager:
         Value: /nusim/walls
       Value: false
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: false
+      Enabled: true
       Name: RedObstacles
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /nusim/obstacles
-      Value: false
+      Value: true
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
       Collision Enabled: false
@@ -435,7 +436,7 @@ Visualization Manager:
       Value: false
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
-      Name: MarkerArray
+      Name: Clusters
       Namespaces:
         landmarks: true
       Topic:
@@ -444,6 +445,18 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Best Effort
         Value: /clusters
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: FitCircles
+      Namespaces:
+        landmarks: true
+      Topic:
+        Depth: 10
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /landmarks
       Value: true
   Enabled: true
   Global Options:
@@ -491,7 +504,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 2.762754201889038
+      Distance: 2.604921579360962
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -506,10 +519,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0997967720031738
+      Pitch: 0.8997968435287476
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz_default_plugins)
-      Yaw: 3.092385768890381
+      Yaw: 3.162386894226074
     Saved: ~
 Window Geometry:
   Displays:

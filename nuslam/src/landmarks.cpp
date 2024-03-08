@@ -37,11 +37,15 @@ class landmarks : public rclcpp::Node
 
       // create a publisher to visualize the clusters
       cluster_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("clusters", qos);
+
+      // creare a publisher to visualize the landmarks
+      landmark_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("landmarks", qos);
     }
 
   private:
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_data_;
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr cluster_pub_;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr landmark_pub_;
 
     /// \brief Callback function for the laser scan data
     /// \param msg The laser scan data
@@ -54,7 +58,10 @@ class landmarks : public rclcpp::Node
       publish_cluster_markers(clusters);
 
       // fit circles to the clusters
-      circle_fit(clusters);
+      std::vector<std::vector<double>> circle_params = circle_fit(clusters);
+
+      // publish the landmarks as markers
+      publish_landmark_markers(circle_params);
     }
 
     /// \brief Detect clusters of points in the laser scan data
@@ -205,8 +212,11 @@ class landmarks : public rclcpp::Node
     /// \brief Circle fitting algorithm
     /// \param clusters The clusters to be fitted
     /// \return The center and radius of the fitted circle
-    void circle_fit(const std::vector<std::vector<std::vector<double>>> & clusters)
+    std::vector<std::vector<double>> circle_fit(const std::vector<std::vector<std::vector<double>>> & clusters)
     {
+      // create a vector to store the centers and radii of the circles
+      std::vector<std::vector<double>> circle_params;
+
       // process each cluster separately
       for (size_t i=0; i < clusters.size(); i++)
       {
@@ -325,7 +335,12 @@ class landmarks : public rclcpp::Node
 
         // log the center and radius of the circle
         RCLCPP_INFO(this->get_logger(), "Center: (%f, %f), Radius: %f", x_center, y_center, radius);
+
+        // create a vector to store the center and radius of the circle
+        std::vector<double> circle = {x_center, y_center, radius};
+        circle_params.push_back(circle);
       }
+      return circle_params;
     }
 
     /// \brief Publish the clusters as markers
@@ -380,6 +395,45 @@ class landmarks : public rclcpp::Node
 
       // publish the marker array
       cluster_pub_->publish(marker_array);
+    }
+
+    /// \brief Publish the landmarks as markers
+    /// \param landmarks The landmarks to be published
+    void publish_landmark_markers(const std::vector<std::vector<double>> & landmarks)
+    {
+      // create a marker array
+      visualization_msgs::msg::MarkerArray marker_array;
+
+      // create a time stamp
+      rclcpp::Time time = rclcpp::Clock().now();
+
+      // iterate through the landmarks
+      for (size_t i=0; i<landmarks.size(); i++)
+      {
+        // create a marker for each landmark
+        visualization_msgs::msg::Marker marker;
+        marker.header.frame_id = "red/base_scan";
+        marker.header.stamp = time;
+        marker.ns = "landmarks";
+        marker.id = i;
+        marker.type = visualization_msgs::msg::Marker::CYLINDER;
+        marker.action = visualization_msgs::msg::Marker::ADD;
+        marker.pose.orientation.w = 1.0;
+        marker.scale.x = 0.1;
+        marker.scale.y = 0.1;
+        marker.scale.z = 0.1;
+        marker.color.g = 1.0;
+        marker.color.a = 1.0;
+        marker.pose.position.x = landmarks[i][0];
+        marker.pose.position.y = landmarks[i][1];
+        marker.pose.position.z = 0;
+
+        // add the marker to the marker array
+        marker_array.markers.push_back(marker);
+      }
+
+      // publish the marker array
+      landmark_pub_->publish(marker_array);
     }
 
     /// \brief Calculate the distance between two points
