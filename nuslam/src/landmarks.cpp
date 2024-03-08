@@ -33,7 +33,7 @@ class landmarks : public rclcpp::Node
 
       // Set QoS settings for the Marker topic
       rclcpp::QoS qos(rclcpp::KeepLast(10));
-      qos.transient_local();
+      qos.best_effort();
 
       // create a publisher to visualize the clusters
       cluster_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("clusters", qos);
@@ -79,8 +79,11 @@ class landmarks : public rclcpp::Node
 
       // create a vector to store the cluster
       std::vector<std::vector<double>> cluster;
-      // add the first point to the cluster
-      cluster.push_back(coordinates[0]);
+      // add the first point to the cluster if it is not 0,0
+      if (coordinates[0][0] != 0 || coordinates[0][1] != 0)
+      {
+        cluster.push_back(coordinates[0]);
+      }
 
       // iterate through the coordinates
       for (size_t i=0; i<coordinates.size()-1; i++)
@@ -91,7 +94,11 @@ class landmarks : public rclcpp::Node
         // if the distance is less than the threshold, add the point to the cluster
         if (dist < DISTANCE_THRESH && dist > 0.0)
         {
-          cluster.push_back(coordinates[i+1]);
+          // add the point to the cluster if it is not 0,0
+          if (coordinates[i+1][0] != 0 || coordinates[i+1][1] != 0)
+          {
+            cluster.push_back(coordinates[i+1]);
+          }
         }
         else
         {
@@ -103,8 +110,11 @@ class landmarks : public rclcpp::Node
           }
           // clear the cluster
           cluster.clear();
-          // add the next point to the cluster
-          cluster.push_back(coordinates[i+1]);
+          // add the next point to the cluster if it is not 0,0
+          if (coordinates[i+1][0] != 0 || coordinates[i+1][1] != 0)
+          {
+            cluster.push_back(coordinates[i+1]);
+          }
         }
       }
 
@@ -112,18 +122,15 @@ class landmarks : public rclcpp::Node
       // check for wrap around
       // calculate the distance between the last and first points
       double dist = distance(coordinates[coordinates.size()-1][0], coordinates[coordinates.size()-1][1], coordinates[0][0], coordinates[0][1]);
-      // log the wrap around distance
-      RCLCPP_INFO(this->get_logger(), "Wrap around distance: %f", dist);
-      // log the coordinates of the last and first points
-      RCLCPP_INFO(this->get_logger(), "Last point: %f, %f", coordinates[coordinates.size()-1][0], coordinates[coordinates.size()-1][1]);
-      RCLCPP_INFO(this->get_logger(), "First point: %f, %f", coordinates[0][0], coordinates[0][1]);
 
       // if the distance is less than the threshold, add the first point to the cluster
       if (dist < DISTANCE_THRESH && dist > 0.0)
       {
-        // log the wrap around
-        // RCLCPP_INFO(this->get_logger(), "Wrap around activated");
-        cluster.push_back(coordinates[0]);
+        // add the first point to the cluster if it is not 0,0
+        if (coordinates[0][0] != 0 || coordinates[0][1] != 0)
+        {
+          cluster.push_back(coordinates[0]);
+        }
       }
 
       // iterate through the coordinates till a break is found
@@ -135,7 +142,11 @@ class landmarks : public rclcpp::Node
         // if the distance is less than the threshold, add the point to the cluster
         if (dist < DISTANCE_THRESH && dist > 0.0)
         {
-          cluster.push_back(coordinates[i+1]);
+          // add the point to the cluster if it is not 0,0
+          if (coordinates[i+1][0] != 0 || coordinates[i+1][1] != 0)
+          {
+            cluster.push_back(coordinates[i+1]);
+          }
         }
         else
         {
@@ -170,6 +181,19 @@ class landmarks : public rclcpp::Node
           clusters.erase(clusters.begin());
         }
       }
+
+    // check if any of the clusters has 0,0
+    for (size_t i=0; i<clusters.size(); i++)
+    {
+      for (size_t j=0; j<clusters[i].size(); j++)
+      {
+        if (clusters[i][j][0] == 0 && clusters[i][j][1] == 0)
+        {
+          // log the zero point and the cluster id
+          RCLCPP_INFO(this->get_logger(), "Zero point: Cluster id: %ld", i);
+        }
+      }
+    }
     // log the clusters size
     RCLCPP_INFO(this->get_logger(), "Number of clusters: %ld", clusters.size());
     return clusters;
@@ -241,7 +265,7 @@ class landmarks : public rclcpp::Node
     }
 };
 
-/// \brief The main fucntion.
+/// \brief The main function.
 /// \param argc
 /// \param argv
 int main(int argc, char * argv[])
