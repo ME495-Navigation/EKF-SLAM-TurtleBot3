@@ -672,6 +672,11 @@ private:
       double theta = world_lidar_transform.rotation();
       double x_end = x_start + lidar_range_max * std::cos(theta + i);
       double y_end = y_start + lidar_range_max * std::sin(theta + i);
+
+      // log the start and end points of the lidar scan
+      // RCLCPP_INFO_STREAM(get_logger(), "x_start: " << x_start << " y_start: " << y_start);
+      // RCLCPP_INFO_STREAM(get_logger(), "x_end: " << x_end << " y_end: " << y_end);
+
       // calculate the intersection points of the lidar scan with the obstacles and walls
       std::vector<double> obs_intersection_points = lidar_obstacle_intersection(
         x_start, y_start,
@@ -679,6 +684,10 @@ private:
       // std::vector<double> wall_intersection_points = lidar_wall_intersection(
       //   x_start, y_start,
       //   x_end, y_end);
+
+      // log the obs intersection points size
+      // RCLCPP_INFO_STREAM(get_logger(), "obs_intersection_points size: " << obs_intersection_points.size());
+
       // concatenate the intersection points
       std::vector<double> intersection_points;
       intersection_points.insert(
@@ -737,13 +746,21 @@ private:
       double p_dist = std::abs(m * cx - cy + b) / std::sqrt(std::pow(m, 2) + 1);
       // check if the perpendicular distance is less than the radius of the obstacle
       if (p_dist <= obstacles_r) {
+        // log intersection detected
+        // RCLCPP_INFO_STREAM(get_logger(), "Intersection detected");
         // calculate the coordinates of the perpendicular line intersection
         double x_int = (cx + m * cy - m * b) / (1 + std::pow(m, 2));
         double y_int = m * x_int + b;
+
+        // log the intersection points
+        // RCLCPP_INFO_STREAM(get_logger(), "x_int: " << x_int << " y_int: " << y_int);
+
         // check if the intersection point is within the line segment
-        if (x_int<std::max(x_start, x_end) and x_int> std::min(x_start, x_end) and
-          y_int<std::max(y_start, y_end) and y_int> std::min(y_start, y_end))
+        if (x_int<=std::max(x_start, x_end) and x_int>= std::min(x_start, x_end) and
+          y_int<=std::max(y_start, y_end) and y_int>= std::min(y_start, y_end))
         {
+          // log intersection point detection within line segment
+          // RCLCPP_INFO_STREAM(get_logger(), "Intersection point detected within line segment");
           // calculate the distance from the perpendicular line intersection to the intersection points
           double d = std::sqrt(std::pow(obstacles_r, 2) - std::pow(p_dist, 2));
           // calculate the intersection points

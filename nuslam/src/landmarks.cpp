@@ -75,13 +75,25 @@ class landmarks : public rclcpp::Node
         // store the x and y coordinates in a vector
         std::vector<double> point = {x, y};
         coordinates.push_back(point);
+
+
+        // log if the point is 0,0
+        if (x == 0 && y == 0 && i == 0)
+        {
+          // log the zero point and the index
+          RCLCPP_INFO(this->get_logger(), "Zero point: Index: %ld, range: %f", i, msg->ranges[i]);
+        }
       }
 
       // create a vector to store the cluster
       std::vector<std::vector<double>> cluster;
       // add the first point to the cluster
       cluster.push_back(coordinates[0]);
-
+      // add the first point to the cluster if it is not 0,0
+      // if (coordinates[0][0] != 0 && coordinates[0][1] != 0)
+      // {
+      //   cluster.push_back(coordinates[0]);
+      // }
       // iterate through the coordinates
       for (size_t i=0; i<coordinates.size()-1; i++)
       {
@@ -121,6 +133,8 @@ class landmarks : public rclcpp::Node
       // if the distance is less than the threshold, add the first point to the cluster
       if (dist < DISTANCE_THRESH && dist > 0.0)
       {
+        // log the wrap around
+        // RCLCPP_INFO(this->get_logger(), "Wrap around activated");
         cluster.push_back(coordinates[0]);
       }
 
@@ -150,23 +164,26 @@ class landmarks : public rclcpp::Node
         }
       }
 
-      // check if there is overlap between the last and first clusters
-      // check if the last points of both clusters are the same
-      double x0 = clusters[clusters.size()-1][clusters[clusters.size()-1].size()-1][0];
-      double y0 = clusters[clusters.size()-1][clusters[clusters.size()-1].size()-1][1];
-      double x1 = clusters[0][0][0];
-      double y1 = clusters[0][0][1];
-
-      if (x0 == x1 && y0 == y1)
+      // check if number of clusters is greater than 0
+      if (clusters.size() > 0)
       {
-        // log the removal
-        RCLCPP_INFO(this->get_logger(), "Removing the first cluster");
-        // remove the first cluster
-        clusters.erase(clusters.begin());
+        // check if there is overlap between the last and first clusters
+        // check if the last points of both clusters are the same
+        double x0 = clusters[clusters.size()-1][clusters[clusters.size()-1].size()-1][0];
+        double y0 = clusters[clusters.size()-1][clusters[clusters.size()-1].size()-1][1];
+        double x1 = clusters[0][clusters[0].size()-1][0];
+        double y1 = clusters[0][clusters[0].size()-1][1];
+
+        if (x0 == x1 && y0 == y1)
+        {
+          // log the removal
+          // RCLCPP_INFO(this->get_logger(), "Removing the first cluster");
+          // remove the first cluster
+          clusters.erase(clusters.begin());
+        }
       }
-    
     // log the clusters size
-    // RCLCPP_INFO(this->get_logger(), "Number of clusters: %ld", clusters.size());
+    RCLCPP_INFO(this->get_logger(), "Number of clusters: %ld", clusters.size());
     return clusters;
     }
 
@@ -177,13 +194,16 @@ class landmarks : public rclcpp::Node
       // create a marker array
       visualization_msgs::msg::MarkerArray marker_array;
 
+      // create a time stamp
+      rclcpp::Time time = rclcpp::Clock().now();
+
       // iterate through the clusters
       for (size_t i=0; i<clusters.size(); i++)
       {
         // create a marker for each cluster
         visualization_msgs::msg::Marker marker;
         marker.header.frame_id = "red/base_scan";
-        marker.header.stamp = rclcpp::Clock().now();
+        marker.header.stamp = time;
         marker.ns = "landmarks";
         marker.id = i;
         marker.type = visualization_msgs::msg::Marker::POINTS;
@@ -204,6 +224,13 @@ class landmarks : public rclcpp::Node
           point.y = clusters[i][j][1];
           point.z = 0;
           marker.points.push_back(point);
+
+          // check if any of the points is 0,0
+          if (point.x == 0 && point.y == 0)
+          {
+            // log the zero point and the cluster id
+            RCLCPP_INFO(this->get_logger(), "Zero point: Cluster id: %ld", i);
+          }
         }
 // ############################## End_Citation [10] ################################
         // add the marker to the marker array
