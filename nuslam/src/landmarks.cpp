@@ -419,8 +419,8 @@ class landmarks : public rclcpp::Node
         marker.type = visualization_msgs::msg::Marker::CYLINDER;
         marker.action = visualization_msgs::msg::Marker::ADD;
         marker.pose.orientation.w = 1.0;
-        marker.scale.x = 0.1;
-        marker.scale.y = 0.1;
+        marker.scale.x = 2*landmarks[i][2];
+        marker.scale.y = 2*landmarks[i][2];
         marker.scale.z = 0.1;
         marker.color.g = 1.0;
         marker.color.a = 1.0;
