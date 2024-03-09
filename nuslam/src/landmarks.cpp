@@ -12,6 +12,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
+#include "geometry_msgs/msg/point.hpp"
+#include "nuslam/msg/landmarks.hpp"
 
 // constants
 /// \brief The minimum distance between two points to be considered part of the same cluster
@@ -38,14 +40,19 @@ class landmarks : public rclcpp::Node
       // create a publisher to visualize the clusters
       cluster_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("clusters", qos);
 
-      // creare a publisher to visualize the landmarks
+      // create a publisher to visualize the landmarks
       landmark_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("landmarks", qos);
+
+      // create a publisher to transmit the detected landmarks data
+      landmark_data_pub_ = create_publisher<nuslam::msg::Landmarks>("landmarks_data", qos);
+      
     }
 
   private:
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_data_;
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr cluster_pub_;
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr landmark_pub_;
+    rclcpp::Publisher<nuslam::msg::Landmarks>::SharedPtr landmark_data_pub_;
 
     /// \brief Callback function for the laser scan data
     /// \param msg The laser scan data
@@ -59,6 +66,9 @@ class landmarks : public rclcpp::Node
 
       // fit circles to the clusters
       std::vector<std::vector<double>> circle_params = circle_fit(clusters);
+
+      // publish the landmarks data
+      publish_landmark_data(circle_params);
 
       // publish the landmarks as markers
       publish_landmark_markers(circle_params);
@@ -341,6 +351,30 @@ class landmarks : public rclcpp::Node
         circle_params.push_back(circle);
       }
       return circle_params;
+    }
+
+
+    /// \brief Publish the landmarks data
+    /// \param landmark_data The landmark parameters
+    void publish_landmark_data(const std::vector<std::vector<double>> & landmark_data)
+    {
+      // create a landmarks message
+      auto landmarks_msg = nuslam::msg::Landmarks();
+
+      // iterate through the landmark data
+      for (size_t i=0; i<landmark_data.size(); i++)
+      {
+        // create a point message
+        geometry_msgs::msg::Point point;
+        point.x = landmark_data[i][0];
+        point.y = landmark_data[i][1];
+        point.z = 0.0;
+
+        // add the point to the landmarks message
+        landmarks_msg.landmarks.push_back(point);
+      }
+      // publish the landmarks message
+      landmark_data_pub_->publish(landmarks_msg);
     }
 
     /// \brief Publish the clusters as markers

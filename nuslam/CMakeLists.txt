@@ -25,9 +25,14 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(Doxygen)
 find_package(Armadillo)
 
-rosidl_generate_interfaces(${PROJECT_NAME}_srv "srv/InitialPose.srv" LIBRARY_NAME ${PROJECT_NAME})
-rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_srv "rosidl_typesupport_cpp")
-
+rosidl_generate_interfaces(
+${PROJECT_NAME}_int 
+"msg/Landmarks.msg"
+"srv/InitialPose.srv"
+LIBRARY_NAME ${PROJECT_NAME}
+DEPENDENCIES
+geometry_msgs)
+rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME}_int "rosidl_typesupport_cpp")
 
 include_directories(${ARMADILLO_INCLUDE_DIRS})
 
@@ -41,6 +46,8 @@ add_executable(landmarks src/landmarks.cpp)
 ament_target_dependencies(landmarks rclcpp std_msgs std_srvs geometry_msgs sensor_msgs
 nuturtlebot_msgs nav_msgs tf2_ros tf2 visualization_msgs turtlelib)
 target_link_libraries(landmarks turtlelib::turtlelib ${ARMADILLO_LIBRARIES})
+target_link_libraries(landmarks "${cpp_typesupport_target}")
+
 
 install(TARGETS
 slam landmarks
@@ -78,6 +85,7 @@ install(DIRECTORY
         config
         launch
         srv
+        msg
         tests
         DESTINATION share/${PROJECT_NAME}/)
 
