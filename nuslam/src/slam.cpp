@@ -43,6 +43,7 @@
 #include "nuslam/srv/initial_pose.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
+#include "nuslam/msg/landmarks.hpp"
 
 using turtlelib::DiffDrive;
 using turtlelib::Transform2D;
@@ -123,6 +124,9 @@ public:
       rclcpp::shutdown();
     }
 
+    declare_parameter("min_distance", 0.25);
+    min_distance = get_parameter("min_distance").as_double(); 
+
     // Create subscribers
     joint_state_ = create_subscription<sensor_msgs::msg::JointState>(
       "joint_states", 10,
@@ -131,10 +135,17 @@ public:
         std::placeholders::_1));
 
     // create subcriber to the fake sensor topic
-    fake_sensor_sub_ = create_subscription<visualization_msgs::msg::MarkerArray>(
-      "fake_sensor", 10,
+    // fake_sensor_sub_ = create_subscription<visualization_msgs::msg::MarkerArray>(
+    //   "fake_sensor", 10,
+    //   std::bind(
+    //     &Slam::fake_sensor_callback, this,
+    //     std::placeholders::_1));
+
+    // create a subscriber to the landmarks topic
+    landmarks_sub_ = create_subscription<nuslam::msg::Landmarks>(
+      "landmarks_data", 10,
       std::bind(
-        &Slam::fake_sensor_callback, this,
+        &Slam::landmarks_callback, this,
         std::placeholders::_1));
 
     // create a odom path publisher
@@ -200,7 +211,8 @@ public:
 private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_;
-  rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr fake_sensor_sub_;
+  // rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr fake_sensor_sub_;
+  rclcpp::Subscription<nuslam::msg::Landmarks>::SharedPtr landmarks_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr odom_path_publisher_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr map_path_publisher_;
@@ -225,6 +237,8 @@ private:
   arma::vec v_t {2, arma::fill::zeros}; // measurement sensor noise
   arma::mat R {2, 2, arma::fill::zeros}; // measurement sensor noise covariance
   double obstacles_r;
+  double detected_landmarks_count = 0;
+  double min_distance;
 
   /// \brief The timer callback
   void timer_callback()
@@ -342,6 +356,37 @@ private:
 
   }
 
+  /// \brief Callback for the landmarks message
+  /// EKF SLAM logic with unknown data association is implemented here
+  /// \param msg The landmarks message
+  void landmarks_callback(const nuslam::msg::Landmarks::SharedPtr msg)
+  {
+    // Get the robot's wheel configuration
+    const auto wheel_config = nuturtle_.get_wheel_config();
+
+    // Get the robot's twist
+    const auto robot_twist = nuturtle_.wheel_twist(wheel_config, prev_wheel_config);
+    // update the previous wheel configuration
+    prev_wheel_config = wheel_config;
+
+    // EKF prediction
+    EKF_Slam_predict(state, covar, robot_twist);
+
+    // iterate through each marker in the landmarks message
+    for (size_t i = 0; i < msg->landmarks.size(); i++) {
+
+      // Fetch the landmark data
+      const auto center_x = msg->landmarks[i].x;
+      const auto center_y = msg->landmarks[i].y;
+
+      // Call the EKF SLAM with unknown data association update step
+      EKF_Slam_update_unknown(state, covar, center_x, center_y);
+    }
+
+    // Broadcast the map transform
+    map_tf_broadcaster();
+  }
+
   /// \brief EKF SLAM prediction step
   /// updates the state and covariance
   /// \param state The state vector
@@ -440,6 +485,132 @@ private:
     H(0, marker_index + 1) = delta_y / std::sqrt(d);
     H(1, marker_index) = -delta_y / d;
     H(1, marker_index + 1) = delta_x / d;
+
+    // Compute the Kalman gain
+    arma::mat K = covar * H.t() * (H * covar * H.t() + R).i();
+
+    // Update the state estimate
+    // Compute the difference between the actual and the theoretical measurement
+    arma::vec z_diff = z - z_hat;
+    // normalize the angle
+    z_diff(1) = turtlelib::normalize_angle(z_diff(1));
+    state += K * z_diff;
+
+    // Update the covariance
+    const auto I = arma::eye<arma::mat>(STATE_SIZE, STATE_SIZE);
+    covar = (I - K * H) * covar;
+  }
+
+  /// \brief EKF SLAM update step with unknown data association
+  /// updates the state and covariance
+  /// \param state The state vector
+  /// \param covar The covariance matrix
+  /// \param center_x The x position of the landmark
+  /// \param center_y The y position of the landmark
+  void EKF_Slam_update_unknown(
+    arma::vec & state, arma::mat & covar,
+    const double & center_x, const double & center_y)
+  {
+    // Convert the x and y position of the obstacle to range measurement format
+    const auto r = std::sqrt(std::pow(center_x, 2) + std::pow(center_y, 2));
+    const auto phi = std::atan2(center_y, center_x);
+    // Construct the actual measurement
+    arma::vec z = {r, phi};
+    // Add sensor noise
+    z += v_t;
+
+    // set the landmark index to detected_landmarks_count
+    auto landmark_index = detected_landmarks_count * 2 + 3;
+
+    // set maha_thresh to minimum distance
+    auto maha_thresh = min_distance;
+
+    // Iterate through the state to find the closest landmark
+    for (size_t k = 0; k < detected_landmarks_count; k++) {
+      // Create the measurement model
+      // Compute the theoretical measurement given the current state estimate
+      // Compute relative distances between the obstacles and the robot
+      const auto delta_x = state(k * 2 + 3) - state(1);
+      const auto delta_y = state(k * 2 + 4) - state(2);
+      const auto d = std::pow(delta_x, 2) + std::pow(delta_y, 2); // squared distance
+      // Construct the theoretical measurement (expected measurement)
+      arma::vec z_hat = {std::sqrt(d), turtlelib::normalize_angle(
+          std::atan2(delta_y, delta_x) - state(
+            0))};
+
+      // Compute the measurement model jacobian
+      // Initialize the H matrix
+      arma::mat H(2, STATE_SIZE, arma::fill::zeros);
+      H(1, 0) = -1;
+      H(0, 1) = -delta_x / std::sqrt(d);
+      H(0, 2) = -delta_y / std::sqrt(d);
+      H(1, 1) = delta_y / d;
+      H(1, 2) = -delta_x / d;
+      H(0, k * 2 + 3) = delta_x / std::sqrt(d);
+      H(0, k * 2 + 4) = delta_y / std::sqrt(d);
+      H(1, k * 2 + 3) = -delta_y / d;
+      H(1, k * 2 + 4) = delta_x / d;
+
+      // compute the covariance
+      const auto C = H * covar * H.t() + R;
+
+      // compute the difference between the actual and the theoretical measurement
+      arma::vec z_diff = z - z_hat;
+      // normalize the angle
+      z_diff(1) = turtlelib::normalize_angle(z_diff(1));
+
+      // compute the mahalanobis distance as a scalar value
+      const auto maha_dist = as_scalar(z_diff.t() * C.i() * z_diff);
+
+      // check if the mahalanobis distance is less than the threshold
+      if (maha_dist < maha_thresh) {
+        // update maha thresh
+        maha_thresh = maha_dist;
+        // update the landmark index
+        landmark_index = k;
+      }
+    }
+
+    // check if the landmark index is equal to detected_landmarks_count
+    // if so, a new landmark has been detected, intialize it
+    if (landmark_index == detected_landmarks_count * 2 + 3) {
+      // initialize the landmark
+      state(detected_landmarks_count * 2 + 3) = state(1) + r * std::cos(phi + state(0));
+      state(detected_landmarks_count * 2 + 4) = state(2) + r * std::sin(phi + state(0));
+
+      // increment the detected_landmarks_count
+      detected_landmarks_count++;
+
+      // Log the intialization
+      RCLCPP_INFO_STREAM(
+        get_logger(), "Initialized landmark " << detected_landmarks_count << " at (" <<
+          state(detected_landmarks_count * 2 + 3) << ", " << state(detected_landmarks_count * 2 + 4) << ")");
+    }
+
+    // Perform the normal EKF SLAM update step
+    // Create the measurement model
+    // Compute the theoretical measurement given the current state estimate
+    // Compute relative distances between the obstacles and the robot
+    const auto delta_x = state(landmark_index) - state(1);
+    const auto delta_y = state(landmark_index + 1) - state(2);
+    const auto d = std::pow(delta_x, 2) + std::pow(delta_y, 2); // squared distance
+    // Construct the theoretical measurement
+    arma::vec z_hat = {std::sqrt(d), turtlelib::normalize_angle(
+        std::atan2(delta_y, delta_x) - state(
+          0))};
+    
+    // Compute the measurement model jacobian
+    // Initialize the H matrix
+    arma::mat H(2, STATE_SIZE, arma::fill::zeros);
+    H(1, 0) = -1;
+    H(0, 1) = -delta_x / std::sqrt(d);
+    H(0, 2) = -delta_y / std::sqrt(d);
+    H(1, 1) = delta_y / d;
+    H(1, 2) = -delta_x / d;
+    H(0, landmark_index) = delta_x / std::sqrt(d);
+    H(0, landmark_index + 1) = delta_y / std::sqrt(d);
+    H(1, landmark_index) = -delta_y / d;
+    H(1, landmark_index + 1) = delta_x / d;
 
     // Compute the Kalman gain
     arma::mat K = covar * H.t() * (H * covar * H.t() + R).i();

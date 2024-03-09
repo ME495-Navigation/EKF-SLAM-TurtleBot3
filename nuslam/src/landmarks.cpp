@@ -44,7 +44,7 @@ class landmarks : public rclcpp::Node
       landmark_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("landmarks", qos);
 
       // create a publisher to transmit the detected landmarks data
-      landmark_data_pub_ = create_publisher<nuslam::msg::Landmarks>("landmarks_data", qos);
+      landmark_data_pub_ = create_publisher<nuslam::msg::Landmarks>("landmarks_data", 10);
       
     }
 
