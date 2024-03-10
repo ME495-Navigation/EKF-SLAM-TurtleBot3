@@ -124,7 +124,7 @@ public:
       rclcpp::shutdown();
     }
 
-    declare_parameter("min_distance", 0.25);
+    declare_parameter("min_distance", 0.4);
     min_distance = get_parameter("min_distance").as_double(); 
 
     // Create subscribers
@@ -196,8 +196,8 @@ public:
     Q_bar(2, 2) = 0.001;
 
     // Initialize the measurement sensor noise
-    v_t(0) = 0.001;
-    v_t(1) = 0.001;
+    v_t(0) = 0.000;
+    v_t(1) = 0.000;
 
     // Initialize the measurement sensor noise covariance
     R(0, 0) = 0.001;
