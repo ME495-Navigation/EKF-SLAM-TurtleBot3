@@ -17,9 +17,9 @@
 
 // constants
 /// \brief The minimum distance between two points to be considered part of the same cluster
-constexpr double DISTANCE_THRESH = 0.25;
+constexpr double DISTANCE_THRESH = 0.1;
 /// \brief The minimum number of points in a cluster to be considered a landmark
-constexpr int MIN_CLUSTER_SIZE = 3;
+constexpr int MIN_CLUSTER_SIZE = 5;
 
 
 /// @brief  Detect landmarks in the laser scan data
@@ -66,6 +66,9 @@ class landmarks : public rclcpp::Node
 
       // fit circles to the clusters
       std::vector<std::vector<double>> circle_params = circle_fit(clusters);
+
+      // filter the landmarks
+      // std::vector<std::vector<double>> landmark_params = filter_landmarks(circle_params);
 
       // publish the landmarks data
       publish_landmark_data(circle_params);
@@ -195,27 +198,11 @@ class landmarks : public rclcpp::Node
 
         if (x0 == x1 && y0 == y1)
         {
-          // log the removal
-          RCLCPP_INFO(this->get_logger(), "Removing the first cluster");
           // remove the first cluster
           clusters.erase(clusters.begin());
         }
       }
 
-    // check if any of the clusters has 0,0
-    for (size_t i=0; i<clusters.size(); i++)
-    {
-      for (size_t j=0; j<clusters[i].size(); j++)
-      {
-        if (clusters[i][j][0] == 0 && clusters[i][j][1] == 0)
-        {
-          // log the zero point and the cluster id
-          RCLCPP_INFO(this->get_logger(), "Zero point: Cluster id: %ld", i);
-        }
-      }
-    }
-    // log the clusters size
-    RCLCPP_INFO(this->get_logger(), "Number of clusters: %ld", clusters.size());
     return clusters;
     }
 
@@ -323,9 +310,8 @@ class landmarks : public rclcpp::Node
           arma::vec A_hat(4, arma::fill::ones);
 
           // find the eigenvector corresponding to the smallest eigenvalue
-          // sort the eigenvalues
-          arma::vec sorted_eigval = arma::sort(eigval);
-          for (size_t j=0; j < sorted_eigval.size(); j++)
+          // eigval is sorted in ascending order
+          for (size_t j=0; j < eigval.size(); j++)
           {
             if (eigval(j) > 0)
             {
@@ -344,7 +330,7 @@ class landmarks : public rclcpp::Node
         double radius = std::sqrt((std::pow(A(1), 2) + std::pow(A(2), 2) - 4*A(0)*A(3)) / (4*std::pow(A(0), 2)));
 
         // log the center and radius of the circle
-        RCLCPP_INFO(this->get_logger(), "Center: (%f, %f), Radius: %f", x_center, y_center, radius);
+        // RCLCPP_INFO(this->get_logger(), "Center: (%f, %f), Radius: %f", x_center, y_center, radius);
 
         // create a vector to store the center and radius of the circle
         std::vector<double> circle = {x_center, y_center, radius};
@@ -352,6 +338,19 @@ class landmarks : public rclcpp::Node
       }
       return circle_params;
     }
+
+    // /// \brief Filter the landmarks
+    // /// \param circle_params The parameters of the fitted circles
+    // /// \return The filtered landmarks
+    // std::vector<std::vector<double>> filter_landmarks(const std::vector<std::vector<double>> & circle_params)
+    // {
+    //   // create a vector to store the filtered landmarks
+    //   std::vector<std::vector<double>> landmark_params;
+
+    //   // iterate through the circle parameters
+    //   for (size_t i=0; i<circle_params.size(); i++)
+    //   {
+    //     // check if the radius is between 
 
 
     /// \brief Publish the landmarks data
@@ -414,13 +413,6 @@ class landmarks : public rclcpp::Node
           point.y = clusters[i][j][1];
           point.z = 0;
           marker.points.push_back(point);
-
-          // check if any of the points is 0,0
-          if (point.x == 0 && point.y == 0)
-          {
-            // log the zero point and the cluster id
-            RCLCPP_INFO(this->get_logger(), "Zero point: Cluster id: %ld", i);
-          }
         }
 // ############################## End_Citation [10] ################################
         // add the marker to the marker array

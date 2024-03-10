@@ -113,9 +113,7 @@ else
     arma::vec A_hat(4, arma::fill::ones);
 
     // find the eigenvector corresponding to the smallest eigenvalue
-    // sort the eigenvalues
-    arma::vec sorted_eigval = arma::sort(eigval);
-    for (size_t j=0; j < sorted_eigval.size(); j++)
+    for (size_t j=0; j < eigval.size(); j++)
     {
     if (eigval(j) > 0)
     {
