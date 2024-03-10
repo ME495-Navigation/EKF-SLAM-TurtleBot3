@@ -56,7 +56,8 @@
     <node
         pkg='nuslam'
         exec='slam'
-        args = "--remap joint_states:=blue/joint_states" >
+        args = "--remap joint_states:=blue/joint_states" 
+        launch-prefix="xterm -e gdb --args">
         <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
         <param from="$(find-pkg-share nusim)/config/basic_world.yaml" />  
         <param name="body_id" value = "green/base_footprint" />

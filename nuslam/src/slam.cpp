@@ -511,6 +511,11 @@ private:
     arma::vec & state, arma::mat & covar,
     const double & center_x, const double & center_y)
   {
+
+    // log the center x and y
+    // RCLCPP_INFO_STREAM(
+    //   get_logger(), "Center x: " << center_x << " Center y: " << center_y);
+
     // Convert the x and y position of the obstacle to range measurement format
     const auto r = std::sqrt(std::pow(center_x, 2) + std::pow(center_y, 2));
     const auto phi = std::atan2(center_y, center_x);
@@ -525,13 +530,24 @@ private:
     // set maha_thresh to minimum distance
     auto maha_thresh = min_distance;
 
+    // log maha_thresh
+    RCLCPP_INFO_STREAM(
+      get_logger(), "Maha thresh: " << maha_thresh << " with detected_landmarks_count: " <<
+        detected_landmarks_count);
+
     // Iterate through the state to find the closest landmark
-    for (size_t k = 0; k < detected_landmarks_count; k++) {
+    for (size_t k = 3; k < landmark_index; k+=2) {
+
+      // log entering the loop
+      RCLCPP_INFO_STREAM(
+        get_logger(), "Entering loop with k: " << k << " and detected_landmarks_count: " <<
+          detected_landmarks_count);
+
       // Create the measurement model
       // Compute the theoretical measurement given the current state estimate
       // Compute relative distances between the obstacles and the robot
-      const auto delta_x = state(k * 2 + 3) - state(1);
-      const auto delta_y = state(k * 2 + 4) - state(2);
+      const auto delta_x = state(k) - state(1);
+      const auto delta_y = state(k+1) - state(2);
       const auto d = std::pow(delta_x, 2) + std::pow(delta_y, 2); // squared distance
       // Construct the theoretical measurement (expected measurement)
       arma::vec z_hat = {std::sqrt(d), turtlelib::normalize_angle(
@@ -546,10 +562,10 @@ private:
       H(0, 2) = -delta_y / std::sqrt(d);
       H(1, 1) = delta_y / d;
       H(1, 2) = -delta_x / d;
-      H(0, k * 2 + 3) = delta_x / std::sqrt(d);
-      H(0, k * 2 + 4) = delta_y / std::sqrt(d);
-      H(1, k * 2 + 3) = -delta_y / d;
-      H(1, k * 2 + 4) = delta_x / d;
+      H(0, k) = delta_x / std::sqrt(d);
+      H(0, k + 1) = delta_y / std::sqrt(d);
+      H(1, k) = -delta_y / d;
+      H(1, k + 1) = delta_x / d;
 
       // compute the covariance
       const auto C = H * covar * H.t() + R;
@@ -561,9 +577,16 @@ private:
 
       // compute the mahalanobis distance as a scalar value
       const auto maha_dist = as_scalar(z_diff.t() * C.i() * z_diff);
+      // log the maha distance
+      RCLCPP_INFO_STREAM(
+        get_logger(), "Maha distance: " << maha_dist << " with k: " << k);
 
       // check if the mahalanobis distance is less than the threshold
       if (maha_dist < maha_thresh) {
+        // log entering the if statement
+        RCLCPP_INFO_STREAM(
+          get_logger(), "Entering if statement with maha_dist: " << maha_dist <<
+            " and maha_thresh: " << maha_thresh);
         // update maha thresh
         maha_thresh = maha_dist;
         // update the landmark index
@@ -578,13 +601,13 @@ private:
       state(detected_landmarks_count * 2 + 3) = state(1) + r * std::cos(phi + state(0));
       state(detected_landmarks_count * 2 + 4) = state(2) + r * std::sin(phi + state(0));
 
-      // increment the detected_landmarks_count
-      detected_landmarks_count++;
-
       // Log the intialization
       RCLCPP_INFO_STREAM(
         get_logger(), "Initialized landmark " << detected_landmarks_count << " at (" <<
           state(detected_landmarks_count * 2 + 3) << ", " << state(detected_landmarks_count * 2 + 4) << ")");
+
+      // increment the detected_landmarks_count
+      detected_landmarks_count++;
     }
 
     // Perform the normal EKF SLAM update step
