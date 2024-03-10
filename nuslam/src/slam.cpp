@@ -55,7 +55,7 @@ using namespace std::chrono_literals;
 
 // Constants
 /// \brief Maximum number of obstacles
-constexpr int MAX_OBSTACLES = 30;
+constexpr int MAX_OBSTACLES = 10;
 /// \brief State size for the EKF
 constexpr int STATE_SIZE = MAX_OBSTACLES * 2 + 3;
 
@@ -196,8 +196,8 @@ public:
     Q_bar(2, 2) = 0.001;
 
     // Initialize the measurement sensor noise
-    v_t(0) = 0.000;
-    v_t(1) = 0.000;
+    v_t(0) = 0.001;
+    v_t(1) = 0.001;
 
     // Initialize the measurement sensor noise covariance
     R(0, 0) = 0.001;
@@ -530,18 +530,8 @@ private:
     // set maha_thresh to minimum distance
     auto maha_thresh = min_distance;
 
-    // log maha_thresh
-    RCLCPP_INFO_STREAM(
-      get_logger(), "Maha thresh: " << maha_thresh << " with detected_landmarks_count: " <<
-        detected_landmarks_count);
-
     // Iterate through the state to find the closest landmark
     for (size_t k = 3; k < landmark_index; k+=2) {
-
-      // log entering the loop
-      RCLCPP_INFO_STREAM(
-        get_logger(), "Entering loop with k: " << k << " and detected_landmarks_count: " <<
-          detected_landmarks_count);
 
       // Create the measurement model
       // Compute the theoretical measurement given the current state estimate
@@ -577,16 +567,9 @@ private:
 
       // compute the mahalanobis distance as a scalar value
       const auto maha_dist = as_scalar(z_diff.t() * C.i() * z_diff);
-      // log the maha distance
-      RCLCPP_INFO_STREAM(
-        get_logger(), "Maha distance: " << maha_dist << " with k: " << k);
 
       // check if the mahalanobis distance is less than the threshold
       if (maha_dist < maha_thresh) {
-        // log entering the if statement
-        RCLCPP_INFO_STREAM(
-          get_logger(), "Entering if statement with maha_dist: " << maha_dist <<
-            " and maha_thresh: " << maha_thresh);
         // update maha thresh
         maha_thresh = maha_dist;
         // update the landmark index
@@ -597,18 +580,22 @@ private:
     // check if the landmark index is equal to detected_landmarks_count
     // if so, a new landmark has been detected, intialize it
     if (landmark_index == detected_landmarks_count * 2 + 3) {
+      // check if the detected_landmarks_count is greater than or equal to the maximum number of obstacles
+      if (detected_landmarks_count < MAX_OBSTACLES - 1)
+      {
       // initialize the landmark
       state(detected_landmarks_count * 2 + 3) = state(1) + r * std::cos(phi + state(0));
       state(detected_landmarks_count * 2 + 4) = state(2) + r * std::sin(phi + state(0));
 
       // Log the intialization
       RCLCPP_INFO_STREAM(
-        get_logger(), "Initialized landmark " << detected_landmarks_count << " at (" <<
-          state(detected_landmarks_count * 2 + 3) << ", " << state(detected_landmarks_count * 2 + 4) << ")");
+        get_logger(), "Initialized landmark " << detected_landmarks_count + 1 << " at (" <<
+          state(landmark_index) << ", " << state(landmark_index + 1) << ")");
 
       // increment the detected_landmarks_count
       detected_landmarks_count++;
-    }
+      }
+      }
 
     // Perform the normal EKF SLAM update step
     // Create the measurement model

@@ -46,8 +46,8 @@
     <node pkg="nusim" exec="nusim" output="screen">
       <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
       <param from="$(find-pkg-share nusim)/config/basic_world.yaml" />
-      <param name="input_noise" value="0.0" />
-      <param name="slip_fraction" value="0.0" />
+      <param name="input_noise" value="0.01" />
+      <param name="slip_fraction" value="0.1" />
       <param name="basic_sensor_variance" value="0.00" />
       <param name="max_range" value="1.0" />
       <param name="lidar_noise" value="0.0" /> 
@@ -56,8 +56,7 @@
     <node
         pkg='nuslam'
         exec='slam'
-        args = "--remap joint_states:=blue/joint_states" 
-        launch-prefix="xterm -e gdb --args">
+        args = "--remap joint_states:=blue/joint_states">
         <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
         <param from="$(find-pkg-share nusim)/config/basic_world.yaml" />  
         <param name="body_id" value = "green/base_footprint" />
