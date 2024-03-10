@@ -50,8 +50,8 @@
       <param name="slip_fraction" value="0.1" />
       <param name="basic_sensor_variance" value="0.00" />
       <param name="max_range" value="1.0" />
-      <param name="lidar_noise" value="0.01" /> 
-      <param name="lidar_resolution" value="0.01" />       
+      <param name="lidar_noise" value="0.001" /> 
+      <param name="lidar_resolution" value="0.001" />       
     </node>
     <node
         pkg='nuslam'
@@ -72,6 +72,8 @@
     </node>
     <node
       pkg='nuslam'
-      exec='landmarks'/>
+      exec='landmarks'>
+      <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+    </node>
   </group>
 </launch>

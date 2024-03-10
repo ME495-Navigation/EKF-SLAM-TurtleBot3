@@ -55,7 +55,7 @@ using namespace std::chrono_literals;
 
 // Constants
 /// \brief Maximum number of obstacles
-constexpr int MAX_OBSTACLES = 10;
+constexpr int MAX_OBSTACLES = 30;
 /// \brief State size for the EKF
 constexpr int STATE_SIZE = MAX_OBSTACLES * 2 + 3;
 
@@ -581,7 +581,7 @@ private:
     // if so, a new landmark has been detected, intialize it
     if (landmark_index == detected_landmarks_count * 2 + 3) {
       // check if the detected_landmarks_count is greater than or equal to the maximum number of obstacles
-      if (detected_landmarks_count < MAX_OBSTACLES - 1)
+      if (detected_landmarks_count < MAX_OBSTACLES)
       {
       // initialize the landmark
       state(detected_landmarks_count * 2 + 3) = state(1) + r * std::cos(phi + state(0));
@@ -595,7 +595,19 @@ private:
       // increment the detected_landmarks_count
       detected_landmarks_count++;
       }
+      else
+      {
+        RCLCPP_INFO_STREAM(
+          get_logger(), "Maximum number of obstacles reached");
       }
+    }
+
+    // if the detected_landmarks_count is greater than or equal to the maximum number of obstacles
+    // set the landmark index to the last landmark seen 
+    if (detected_landmarks_count >= MAX_OBSTACLES)
+    {
+      landmark_index = (MAX_OBSTACLES - 1) * 2 + 3;
+    }
 
     // Perform the normal EKF SLAM update step
     // Create the measurement model
@@ -635,6 +647,7 @@ private:
     // Update the covariance
     const auto I = arma::eye<arma::mat>(STATE_SIZE, STATE_SIZE);
     covar = (I - K * H) * covar;
+
   }
 
   /// \brief Map transform broadcaster

@@ -19,7 +19,7 @@
 /// \brief The minimum distance between two points to be considered part of the same cluster
 constexpr double DISTANCE_THRESH = 0.1;
 /// \brief The minimum number of points in a cluster to be considered a landmark
-constexpr int MIN_CLUSTER_SIZE = 5;
+constexpr int MIN_CLUSTER_SIZE = 4;
 
 
 /// @brief  Detect landmarks in the laser scan data
@@ -29,6 +29,11 @@ class landmarks : public rclcpp::Node
     landmarks()
     : Node("landmarks")
     {
+
+      // create parameters
+      declare_parameter("obstacles.r", 0.038);
+      obstacles_r = get_parameter("obstacles.r").as_double();
+
       // create subscriber to laser scan data
       laser_scan_data_ = create_subscription<sensor_msgs::msg::LaserScan>(
         "red/lidar", 10, std::bind(&landmarks::laser_scan_callback, this, std::placeholders::_1));
@@ -53,6 +58,7 @@ class landmarks : public rclcpp::Node
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr cluster_pub_;
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr landmark_pub_;
     rclcpp::Publisher<nuslam::msg::Landmarks>::SharedPtr landmark_data_pub_;
+    double obstacles_r;
 
     /// \brief Callback function for the laser scan data
     /// \param msg The laser scan data
@@ -68,13 +74,13 @@ class landmarks : public rclcpp::Node
       std::vector<std::vector<double>> circle_params = circle_fit(clusters);
 
       // filter the landmarks
-      // std::vector<std::vector<double>> landmark_params = filter_landmarks(circle_params);
+      std::vector<std::vector<double>> landmark_params = filter_landmarks(circle_params);
 
       // publish the landmarks data
-      publish_landmark_data(circle_params);
+      publish_landmark_data(landmark_params);
 
       // publish the landmarks as markers
-      publish_landmark_markers(circle_params);
+      publish_landmark_markers(landmark_params);
     }
 
     /// \brief Detect clusters of points in the laser scan data
@@ -339,19 +345,27 @@ class landmarks : public rclcpp::Node
       return circle_params;
     }
 
-    // /// \brief Filter the landmarks
-    // /// \param circle_params The parameters of the fitted circles
-    // /// \return The filtered landmarks
-    // std::vector<std::vector<double>> filter_landmarks(const std::vector<std::vector<double>> & circle_params)
-    // {
-    //   // create a vector to store the filtered landmarks
-    //   std::vector<std::vector<double>> landmark_params;
+    /// \brief Filter the landmarks
+    /// \param circle_params The parameters of the fitted circles
+    /// \return The filtered landmarks
+    std::vector<std::vector<double>> filter_landmarks(const std::vector<std::vector<double>> & circle_params)
+    {
+      // create a vector to store the filtered landmarks
+      std::vector<std::vector<double>> landmark_params;
 
-    //   // iterate through the circle parameters
-    //   for (size_t i=0; i<circle_params.size(); i++)
-    //   {
-    //     // check if the radius is between 
+      // iterate through the circle parameters
+      for (size_t i=0; i<circle_params.size(); i++)
+      {
+        // check if the radius is between 0.1 of the obstacle radius
+        if (circle_params[i][2] > 0.9*obstacles_r && circle_params[i][2] < 1.1*obstacles_r)
+        {
+          // add the circle parameters to the landmark parameters
+          landmark_params.push_back(circle_params[i]);
+        }
+      }
 
+      return landmark_params;
+    }
 
     /// \brief Publish the landmarks data
     /// \param landmark_data The landmark parameters
