@@ -190,18 +190,17 @@ public:
     }
 
     // Initialize the process noise covariance matrix
-    // Set the diagonal elements to 0.01 (constant value)
     Q_bar(0, 0) = 0.001;
     Q_bar(1, 1) = 0.001;
     Q_bar(2, 2) = 0.001;
 
     // Initialize the measurement sensor noise
-    v_t(0) = 0.001;
-    v_t(1) = 0.001;
+    v_t(0) = 0.0;
+    v_t(1) = 0.0;
 
     // Initialize the measurement sensor noise covariance
-    R(0, 0) = 0.001;
-    R(1, 1) = 0.001;
+    R(0, 0) = 0.5;
+    R(1, 1) = 0.5;
 
     // Create timer
     timer_ =
