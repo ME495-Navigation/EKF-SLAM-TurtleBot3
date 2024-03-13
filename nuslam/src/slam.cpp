@@ -125,7 +125,10 @@ public:
     }
 
     declare_parameter("min_distance", 0.4);
-    min_distance = get_parameter("min_distance").as_double(); 
+    min_distance = get_parameter("min_distance").as_double();
+
+    declare_parameter("use_data_association", true);
+    use_data_association = get_parameter("use_data_association").as_bool();
 
     // Create subscribers
     joint_state_ = create_subscription<sensor_msgs::msg::JointState>(
@@ -135,11 +138,11 @@ public:
         std::placeholders::_1));
 
     // create subcriber to the fake sensor topic
-    // fake_sensor_sub_ = create_subscription<visualization_msgs::msg::MarkerArray>(
-    //   "fake_sensor", 10,
-    //   std::bind(
-    //     &Slam::fake_sensor_callback, this,
-    //     std::placeholders::_1));
+    fake_sensor_sub_ = create_subscription<visualization_msgs::msg::MarkerArray>(
+      "fake_sensor", 10,
+      std::bind(
+        &Slam::fake_sensor_callback, this,
+        std::placeholders::_1));
 
     // create a subscriber to the landmarks topic
     landmarks_sub_ = create_subscription<nuslam::msg::Landmarks>(
@@ -210,7 +213,7 @@ public:
 private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_;
-  // rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr fake_sensor_sub_;
+  rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr fake_sensor_sub_;
   rclcpp::Subscription<nuslam::msg::Landmarks>::SharedPtr landmarks_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr odom_path_publisher_;
@@ -238,6 +241,7 @@ private:
   double obstacles_r;
   double detected_landmarks_count = 0;
   double min_distance;
+  bool use_data_association;
 
   /// \brief The timer callback
   void timer_callback()
@@ -321,6 +325,11 @@ private:
   /// \param msg The fake sensor message
   void fake_sensor_callback(const visualization_msgs::msg::MarkerArray::SharedPtr msg)
   {
+    // check if the use_data_association is true
+    // if so, don't use the fake sensor
+    if (use_data_association) {
+      return;
+    }
     // Get the robot's wheel configuration
     const auto wheel_config = nuturtle_.get_wheel_config();
 
@@ -360,6 +369,12 @@ private:
   /// \param msg The landmarks message
   void landmarks_callback(const nuslam::msg::Landmarks::SharedPtr msg)
   {
+
+    // check if the use_data_association is false
+    // if so, don't use the data association
+    if (!use_data_association) {
+      return;
+    }
     // Get the robot's wheel configuration
     const auto wheel_config = nuturtle_.get_wheel_config();
 
