@@ -25,7 +25,7 @@
 
   <!-- simulator -->
   <group if="$(eval '\'$(var robot)\' == \'nusim\' and \'$(var use_rviz)\' == \'true\'')">
-    <arg name = "rviz_config" default = "$(find-pkg-share nuslam)/config/temp_sim.rviz" 
+    <arg name = "rviz_config" default = "$(find-pkg-share nuslam)/config/unknown_data.rviz" 
     description = "Name of the rviz configuration file relative to the project's share directory" />
     <!-- rviz will enable us to see the robot -->
     <node pkg="rviz2" exec="rviz2" args="-d $(var rviz_config)"/>
