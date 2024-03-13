@@ -98,7 +98,8 @@ class landmarks : public rclcpp::Node
       for (size_t i=0; i<msg->ranges.size(); i++)
       {
         // convert the range data to relative x and y coordinates
-        double x = msg->ranges[i] * cos(msg->angle_min + i * msg->angle_increment);
+        // -0.032 is to account for offset between base_link and base_scan on the robot
+        double x = -0.032 + msg->ranges[i] * cos(msg->angle_min + i * msg->angle_increment);
         double y = msg->ranges[i] * sin(msg->angle_min + i * msg->angle_increment);
 
         // store the x and y coordinates in a vector
