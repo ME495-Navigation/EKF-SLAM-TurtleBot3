@@ -25,7 +25,7 @@
 
   <!-- simulator -->
   <group if="$(eval '\'$(var robot)\' == \'nusim\' and \'$(var use_rviz)\' == \'true\'')">
-    <arg name = "rviz_config" default = "$(find-pkg-share nuslam)/config/slam_sim.rviz" 
+    <arg name = "rviz_config" default = "$(find-pkg-share nuslam)/config/temp_sim.rviz" 
     description = "Name of the rviz configuration file relative to the project's share directory" />
     <!-- rviz will enable us to see the robot -->
     <node pkg="rviz2" exec="rviz2" args="-d $(var rviz_config)"/>
@@ -62,15 +62,20 @@
         <param name="body_id" value = "green/base_footprint" />
         <param name = "wheel_left" value = "wheel_left_joint" />
         <param name = "wheel_right" value = "wheel_right_joint" />
-        <param name = "use_data_association" value = "false" />
-        <param name = "process_noise_covariance" value = "0.5" />
-        <param name = "measurement_sensor_noise_covariance" value = "0.001" />
+        <param name = "use_data_association" value = "true" />
+        <param name = "process_noise_covariance" value = "0.1" />
+        <param name = "measurement_sensor_noise_covariance" value = "0.01" />
     </node>
     <node
       pkg='nuturtle_control'
       exec='turtle_control' 
       args = " --remap wheel_cmd:=red/wheel_cmd --remap sensor_data:=red/sensor_data 
       --remap joint_states:=blue/joint_states" >
+      <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+    </node>
+    <node
+      pkg='nuslam'
+      exec='landmarks'>
       <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
     </node>
   </group>

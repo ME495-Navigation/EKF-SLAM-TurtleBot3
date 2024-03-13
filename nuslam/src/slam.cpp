@@ -130,6 +130,15 @@ public:
     declare_parameter("use_data_association", true);
     use_data_association = get_parameter("use_data_association").as_bool();
 
+    declare_parameter("process_noise_covariance", 0.001);
+    p_noise_covar = get_parameter("process_noise_covariance").as_double();
+
+    declare_parameter("measurement_sensor_noise", 0.0);
+    m_noise = get_parameter("measurement_sensor_noise").as_double();
+
+    declare_parameter("measurement_sensor_noise_covariance", 0.5);
+    m_noise_covar = get_parameter("measurement_sensor_noise_covariance").as_double();
+
     // Create subscribers
     joint_state_ = create_subscription<sensor_msgs::msg::JointState>(
       "joint_states", 10,
@@ -193,17 +202,17 @@ public:
     }
 
     // Initialize the process noise covariance matrix
-    Q_bar(0, 0) = 0.001;
-    Q_bar(1, 1) = 0.001;
-    Q_bar(2, 2) = 0.001;
+    Q_bar(0, 0) = p_noise_covar;
+    Q_bar(1, 1) = p_noise_covar;
+    Q_bar(2, 2) = p_noise_covar;
 
     // Initialize the measurement sensor noise
-    v_t(0) = 0.0;
-    v_t(1) = 0.0;
+    v_t(0) = m_noise;
+    v_t(1) = m_noise;
 
     // Initialize the measurement sensor noise covariance
-    R(0, 0) = 0.5;
-    R(1, 1) = 0.5;
+    R(0, 0) = m_noise_covar;
+    R(1, 1) = m_noise_covar;
 
     // Create timer
     timer_ =
@@ -242,6 +251,7 @@ private:
   double detected_landmarks_count = 0;
   double min_distance;
   bool use_data_association;
+  double p_noise_covar, m_noise, m_noise_covar;
 
   /// \brief The timer callback
   void timer_callback()
