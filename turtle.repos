@@ -7,7 +7,3 @@ repositories:
     type: git
     url: git@github.com:ME495-Navigation/nuturtlebot_msgs.git
     version: humble
-  slam_project:
-    type: git
-    url: git@github.com:ME495-Navigation/slam-project-241abhishek.git
-    version: main
