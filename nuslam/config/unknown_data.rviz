@@ -9,7 +9,7 @@ Panels:
         - /RedPath1/Topic1
         - /Odometry1/Shape1
         - /Clusters1/Topic1
-        - /FitCircles1/Topic1
+        - /DetectedLandmarks1/Topic1
       Splitter Ratio: 0.5
     Tree Height: 663
   - Class: rviz_common/Selection
@@ -547,7 +547,7 @@ Visualization Manager:
       Value: false
     - Class: rviz_default_plugins/MarkerArray
       Enabled: false
-      Name: FitCircles
+      Name: DetectedLandmarks
       Namespaces:
         {}
       Topic:
