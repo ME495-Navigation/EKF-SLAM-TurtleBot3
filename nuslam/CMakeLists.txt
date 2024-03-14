@@ -26,7 +26,7 @@ find_package(Doxygen)
 find_package(Armadillo)
 
 rosidl_generate_interfaces(
-${PROJECT_NAME}_int 
+${PROJECT_NAME}_int
 "msg/Landmarks.msg"
 "srv/InitialPose.srv"
 LIBRARY_NAME ${PROJECT_NAME}

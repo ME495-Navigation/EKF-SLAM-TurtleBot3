@@ -756,8 +756,8 @@ private:
         // RCLCPP_INFO_STREAM(get_logger(), "x_int: " << x_int << " y_int: " << y_int);
 
         // check if the intersection point is within the line segment
-        if (x_int<=std::max(x_start, x_end) and x_int>= std::min(x_start, x_end) and
-          y_int<=std::max(y_start, y_end) and y_int>= std::min(y_start, y_end))
+        if (x_int <= std::max(x_start, x_end) and x_int >= std::min(x_start, x_end) and
+          y_int <= std::max(y_start, y_end) and y_int >= std::min(y_start, y_end))
         {
           // log intersection point detection within line segment
           // RCLCPP_INFO_STREAM(get_logger(), "Intersection point detected within line segment");

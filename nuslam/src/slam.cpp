@@ -550,13 +550,13 @@ private:
     auto maha_thresh = min_distance;
 
     // Iterate through the state to find the closest landmark
-    for (size_t k = 3; k < landmark_index; k+=2) {
+    for (size_t k = 3; k < landmark_index; k += 2) {
 
       // Create the measurement model
       // Compute the theoretical measurement given the current state estimate
       // Compute relative distances between the obstacles and the robot
       const auto delta_x = state(k) - state(1);
-      const auto delta_y = state(k+1) - state(2);
+      const auto delta_y = state(k + 1) - state(2);
       const auto d = std::pow(delta_x, 2) + std::pow(delta_y, 2); // squared distance
       // Construct the theoretical measurement (expected measurement)
       arma::vec z_hat = {std::sqrt(d), turtlelib::normalize_angle(
@@ -600,63 +600,61 @@ private:
     // if so, a new landmark has been detected, intialize it
     if (landmark_index == detected_landmarks_count * 2 + 3) {
       // check if the detected_landmarks_count is greater than or equal to the maximum number of obstacles
-      if (detected_landmarks_count < MAX_OBSTACLES)
-      {
-      // initialize the landmark
-      state(detected_landmarks_count * 2 + 3) = state(1) + r * std::cos(phi + state(0));
-      state(detected_landmarks_count * 2 + 4) = state(2) + r * std::sin(phi + state(0));
+      if (detected_landmarks_count < MAX_OBSTACLES) {
+        // initialize the landmark
+        state(detected_landmarks_count * 2 + 3) = state(1) + r * std::cos(phi + state(0));
+        state(detected_landmarks_count * 2 + 4) = state(2) + r * std::sin(phi + state(0));
 
-      // Log the intialization
-      RCLCPP_INFO_STREAM(
-        get_logger(), "Initialized landmark " << detected_landmarks_count + 1 << " at (" <<
-          state(landmark_index) << ", " << state(landmark_index + 1) << ")");
+        // Log the intialization
+        RCLCPP_INFO_STREAM(
+          get_logger(), "Initialized landmark " << detected_landmarks_count + 1 << " at (" <<
+            state(landmark_index) << ", " << state(landmark_index + 1) << ")");
 
-      // increment the detected_landmarks_count
-      detected_landmarks_count++;
+        // increment the detected_landmarks_count
+        detected_landmarks_count++;
       }
     }
 
     // check if the landmark index is within the state vector size bounds
-    if (landmark_index < MAX_OBSTACLES*2 +3)
-    {
-    // Perform the normal EKF SLAM update step
-    // Create the measurement model
-    // Compute the theoretical measurement given the current state estimate
-    // Compute relative distances between the obstacles and the robot
-    const auto delta_x = state(landmark_index) - state(1);
-    const auto delta_y = state(landmark_index + 1) - state(2);
-    const auto d = std::pow(delta_x, 2) + std::pow(delta_y, 2); // squared distance
-    // Construct the theoretical measurement
-    arma::vec z_hat = {std::sqrt(d), turtlelib::normalize_angle(
-        std::atan2(delta_y, delta_x) - state(
-          0))};
-    
-    // Compute the measurement model jacobian
-    // Initialize the H matrix
-    arma::mat H(2, STATE_SIZE, arma::fill::zeros);
-    H(1, 0) = -1;
-    H(0, 1) = -delta_x / std::sqrt(d);
-    H(0, 2) = -delta_y / std::sqrt(d);
-    H(1, 1) = delta_y / d;
-    H(1, 2) = -delta_x / d;
-    H(0, landmark_index) = delta_x / std::sqrt(d);
-    H(0, landmark_index + 1) = delta_y / std::sqrt(d);
-    H(1, landmark_index) = -delta_y / d;
-    H(1, landmark_index + 1) = delta_x / d;
+    if (landmark_index < MAX_OBSTACLES * 2 + 3) {
+      // Perform the normal EKF SLAM update step
+      // Create the measurement model
+      // Compute the theoretical measurement given the current state estimate
+      // Compute relative distances between the obstacles and the robot
+      const auto delta_x = state(landmark_index) - state(1);
+      const auto delta_y = state(landmark_index + 1) - state(2);
+      const auto d = std::pow(delta_x, 2) + std::pow(delta_y, 2); // squared distance
+      // Construct the theoretical measurement
+      arma::vec z_hat = {std::sqrt(d), turtlelib::normalize_angle(
+          std::atan2(delta_y, delta_x) - state(
+            0))};
 
-    // Compute the Kalman gain
-    arma::mat K = covar * H.t() * (H * covar * H.t() + R).i();
+      // Compute the measurement model jacobian
+      // Initialize the H matrix
+      arma::mat H(2, STATE_SIZE, arma::fill::zeros);
+      H(1, 0) = -1;
+      H(0, 1) = -delta_x / std::sqrt(d);
+      H(0, 2) = -delta_y / std::sqrt(d);
+      H(1, 1) = delta_y / d;
+      H(1, 2) = -delta_x / d;
+      H(0, landmark_index) = delta_x / std::sqrt(d);
+      H(0, landmark_index + 1) = delta_y / std::sqrt(d);
+      H(1, landmark_index) = -delta_y / d;
+      H(1, landmark_index + 1) = delta_x / d;
 
-    // Update the state estimate
-    // Compute the difference between the actual and the theoretical measurement
-    arma::vec z_diff = z - z_hat;
-    // normalize the angle
-    z_diff(1) = turtlelib::normalize_angle(z_diff(1));
-    state += K * z_diff;
+      // Compute the Kalman gain
+      arma::mat K = covar * H.t() * (H * covar * H.t() + R).i();
 
-    // Update the covariance
-    const auto I = arma::eye<arma::mat>(STATE_SIZE, STATE_SIZE);
-    covar = (I - K * H) * covar;
+      // Update the state estimate
+      // Compute the difference between the actual and the theoretical measurement
+      arma::vec z_diff = z - z_hat;
+      // normalize the angle
+      z_diff(1) = turtlelib::normalize_angle(z_diff(1));
+      state += K * z_diff;
+
+      // Update the covariance
+      const auto I = arma::eye<arma::mat>(STATE_SIZE, STATE_SIZE);
+      covar = (I - K * H) * covar;
     }
   }
 
