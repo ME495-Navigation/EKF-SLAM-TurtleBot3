@@ -535,11 +535,6 @@ private:
     arma::vec & state, arma::mat & covar,
     const double & center_x, const double & center_y)
   {
-
-    // log the center x and y
-    // RCLCPP_INFO_STREAM(
-    //   get_logger(), "Center x: " << center_x << " Center y: " << center_y);
-
     // Convert the x and y position of the obstacle to range measurement format
     const auto r = std::sqrt(std::pow(center_x, 2) + std::pow(center_y, 2));
     const auto phi = std::atan2(center_y, center_x);

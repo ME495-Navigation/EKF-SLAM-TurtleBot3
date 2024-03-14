@@ -40,7 +40,7 @@ class landmarks : public rclcpp::Node
 
       // Set QoS settings for the Marker topic
       rclcpp::QoS qos(rclcpp::KeepLast(10));
-      qos.best_effort();
+      qos.transient_local();
 
       // create a publisher to visualize the clusters
       cluster_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("clusters", qos);
@@ -424,7 +424,7 @@ class landmarks : public rclcpp::Node
         {
           // create a point for each point in the cluster
           geometry_msgs::msg::Point point;
-          point.x = clusters[i][j][0];
+          point.x = clusters[i][j][0] + 0.032; // 0.032 is the offset between base_link and base_scan on the robot
           point.y = clusters[i][j][1];
           point.z = 0;
           marker.points.push_back(point);
@@ -465,7 +465,7 @@ class landmarks : public rclcpp::Node
         marker.scale.z = 0.1;
         marker.color.g = 1.0;
         marker.color.a = 1.0;
-        marker.pose.position.x = landmarks[i][0];
+        marker.pose.position.x = landmarks[i][0] + 0.032; // 0.032 is the offset between base_link and base_scan on the robot
         marker.pose.position.y = landmarks[i][1];
         marker.pose.position.z = 0;
 
