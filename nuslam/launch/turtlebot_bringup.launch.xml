@@ -1,5 +1,5 @@
 <launch>
-    <include file="$(find-pkg-share nuslam)/launch/unkown_data_assoc.launch.xml">
+    <include file="$(find-pkg-share nuslam)/launch/unknown_data_assoc.launch.xml">
         <arg name="robot" value="localhost" />
         <arg name="use_rviz" value="false" />
         <arg name="cmd_src" value="none" />

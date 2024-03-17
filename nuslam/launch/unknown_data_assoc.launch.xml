@@ -105,6 +105,7 @@
     args = " --frame-id nusim/world --child-frame-id odom" />
     <include file="$(find-pkg-share hls_lfcd_lds_driver)/launch/hlds_laser.launch.py">
       <arg name="port" value="/dev/ttyUSB0" />
+      <arg name="frame_id" value="green/base_scan"/>
     </include>
     <node
         pkg='nuslam'
@@ -121,7 +122,8 @@
     </node>
     <node
       pkg='nuslam'
-      exec='landmarks'>
+      exec='landmarks'
+      args = "--remap red/lidar:=scan --remap red/base_scan:=green/base_scan">
       <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
     </node>
   </group>
