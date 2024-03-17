@@ -55,7 +55,7 @@ using namespace std::chrono_literals;
 
 // Constants
 /// \brief Maximum number of obstacles
-constexpr int MAX_OBSTACLES = 10;
+constexpr int MAX_OBSTACLES = 7;
 /// \brief State size for the EKF
 constexpr int STATE_SIZE = MAX_OBSTACLES * 2 + 3;
 

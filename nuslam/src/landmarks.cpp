@@ -34,9 +34,18 @@ public:
     declare_parameter("obstacles.r", 0.038);
     obstacles_r = get_parameter("obstacles.r").as_double();
 
-    // create subscriber to laser scan data
-    laser_scan_data_ = create_subscription<sensor_msgs::msg::LaserScan>(
-      "red/lidar", 10, std::bind(&landmarks::laser_scan_callback, this, std::placeholders::_1));
+    declare_parameter("real_lidar", false);
+    real_lidar = get_parameter("real_lidar").as_bool();
+
+    if (real_lidar) {
+      // create subscriber to laser scan data
+      laser_scan_data_ = create_subscription<sensor_msgs::msg::LaserScan>(
+        "scan", rclcpp::SensorDataQoS(), std::bind(&landmarks::laser_scan_callback, this, std::placeholders::_1));
+    } else {
+      // create subscriber to laser scan data
+      laser_scan_data_ = create_subscription<sensor_msgs::msg::LaserScan>(
+        "red/lidar", 10, std::bind(&landmarks::laser_scan_callback, this, std::placeholders::_1));
+    }
 
     // Set QoS settings for the Marker topic
     rclcpp::QoS qos(rclcpp::KeepLast(10));
@@ -59,6 +68,7 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr landmark_pub_;
   rclcpp::Publisher<nuslam::msg::Landmarks>::SharedPtr landmark_data_pub_;
   double obstacles_r;
+  bool real_lidar;
 
   /// \brief Callback function for the laser scan data
   /// \param msg The laser scan data
@@ -89,6 +99,8 @@ private:
   std::vector<std::vector<std::vector<double>>> detect_clusters(
     const sensor_msgs::msg::LaserScan::SharedPtr msg)
   {
+    // // add a log message
+    // RCLCPP_INFO(this->get_logger(), "Laser scan data received");
     //create a vector of the clusters
     std::vector<std::vector<std::vector<double>>> clusters;
     // create a vector of the x and y coordinates
@@ -384,11 +396,24 @@ private:
     // create a time stamp
     rclcpp::Time time = rclcpp::Clock().now();
 
+
+    // log the boolean value of real_lidar
+    RCLCPP_INFO(this->get_logger(), "Real Lidar: %d", real_lidar);
+
+    // create a frame_id
+    std::string frame_id = "red/base_scan";
+
+    // check if real_lidar is true
+    // set frame_id to green/base_scan
+    if (real_lidar) {
+      frame_id = "green/base_scan";
+    }
+
     // iterate through the clusters
     for (size_t i = 0; i < clusters.size(); i++) {
       // create a marker for each cluster
       visualization_msgs::msg::Marker marker;
-      marker.header.frame_id = "red/base_scan";
+      marker.header.frame_id = frame_id;
       marker.header.stamp = time;
       marker.ns = "landmarks";
       marker.id = i;
@@ -429,11 +454,20 @@ private:
     // create a time stamp
     rclcpp::Time time = rclcpp::Clock().now();
 
+    // create a frame_id
+    std::string frame_id = "red/base_scan";
+
+    // check if real_lidar is true
+    // set frame_id to green/base_scan
+    if (real_lidar) {
+      frame_id = "green/base_scan";
+    }
+
     // iterate through the landmarks
     for (size_t i = 0; i < landmarks.size(); i++) {
       // create a marker for each landmark
       visualization_msgs::msg::Marker marker;
-      marker.header.frame_id = "red/base_scan";
+      marker.header.frame_id = frame_id;
       marker.header.stamp = time;
       marker.ns = "landmarks";
       marker.id = i;
