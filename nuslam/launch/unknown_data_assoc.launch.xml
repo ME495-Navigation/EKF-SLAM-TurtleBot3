@@ -122,8 +122,7 @@
     </node>
     <node
       pkg='nuslam'
-      exec='landmarks'
-      args = "--remap red/lidar:=scan --remap red/base_scan:=green/base_scan">
+      exec='landmarks'>
       <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
       <param name="real_lidar" value="true" />
     </node>

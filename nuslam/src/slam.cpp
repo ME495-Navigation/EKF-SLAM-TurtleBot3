@@ -252,10 +252,13 @@ private:
   double min_distance;
   bool use_data_association;
   double p_noise_covar, m_noise, m_noise_covar;
+  rclcpp::Time current_time = this->get_clock()->now();
 
   /// \brief The timer callback
   void timer_callback()
   {
+    // create a time object
+    current_time = this->get_clock()->now();
     timer_count_++;
     odom_path_publisher();
     map_path_publisher();
@@ -267,7 +270,6 @@ private:
   /// \param msg The joint states message
   void joint_state_callback(const sensor_msgs::msg::JointState & msg)
   {
-
     // use fk to update the robot's configuration
     const auto updated_config = nuturtle_.forward_kinematics(
       WheelConfig{msg.position.at(0), msg.position.at(1)});
@@ -296,7 +298,7 @@ private:
     // publish the robot's transform
     geometry_msgs::msg::TransformStamped odom_t;
 
-    odom_t.header.stamp = this->get_clock()->now();
+    odom_t.header.stamp = current_time;
     odom_t.header = odom_msg_.header;
     odom_t.child_frame_id = odom_msg_.child_frame_id;
 
@@ -314,7 +316,7 @@ private:
 
     // publish world to robot transform
     geometry_msgs::msg::TransformStamped world_t;
-    world_t.header.stamp = this->get_clock()->now();
+    world_t.header.stamp = current_time;
     world_t.header.frame_id = "nusim/world";
     world_t.child_frame_id = "blue/base_footprint";
     world_t.transform.translation.x = odom_msg_.pose.pose.position.x;
@@ -669,7 +671,7 @@ private:
 
     // broadcast the robot's map to odom transform
     geometry_msgs::msg::TransformStamped map_t;
-    map_t.header.stamp = this->get_clock()->now();
+    map_t.header.stamp = current_time;
     map_t.header.frame_id = "map";
     map_t.child_frame_id = odom_msg_.header.frame_id;
     map_t.transform.translation.x = map_to_odom_tf.translation().x;

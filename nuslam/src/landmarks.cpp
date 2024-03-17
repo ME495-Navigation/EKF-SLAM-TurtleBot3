@@ -69,11 +69,14 @@ private:
   rclcpp::Publisher<nuslam::msg::Landmarks>::SharedPtr landmark_data_pub_;
   double obstacles_r;
   bool real_lidar;
+  rclcpp::Time current_time;
 
   /// \brief Callback function for the laser scan data
   /// \param msg The laser scan data
   void laser_scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
   {
+    // set the current time
+    current_time = msg->header.stamp;
     // detect clusters in the laser scan data
     std::vector<std::vector<std::vector<double>>> clusters = detect_clusters(msg);
 
@@ -99,8 +102,6 @@ private:
   std::vector<std::vector<std::vector<double>>> detect_clusters(
     const sensor_msgs::msg::LaserScan::SharedPtr msg)
   {
-    // // add a log message
-    // RCLCPP_INFO(this->get_logger(), "Laser scan data received");
     //create a vector of the clusters
     std::vector<std::vector<std::vector<double>>> clusters;
     // create a vector of the x and y coordinates
@@ -394,11 +395,7 @@ private:
     visualization_msgs::msg::MarkerArray marker_array;
 
     // create a time stamp
-    rclcpp::Time time = rclcpp::Clock().now();
-
-
-    // log the boolean value of real_lidar
-    RCLCPP_INFO(this->get_logger(), "Real Lidar: %d", real_lidar);
+    rclcpp::Time time = current_time;
 
     // create a frame_id
     std::string frame_id = "red/base_scan";
@@ -452,7 +449,7 @@ private:
     visualization_msgs::msg::MarkerArray marker_array;
 
     // create a time stamp
-    rclcpp::Time time = rclcpp::Clock().now();
+    rclcpp::Time time = current_time;
 
     // create a frame_id
     std::string frame_id = "red/base_scan";
