@@ -40,7 +40,8 @@ public:
     if (real_lidar) {
       // create subscriber to laser scan data
       laser_scan_data_ = create_subscription<sensor_msgs::msg::LaserScan>(
-        "scan", rclcpp::SensorDataQoS(), std::bind(&landmarks::laser_scan_callback, this, std::placeholders::_1));
+        "scan", rclcpp::SensorDataQoS(),
+        std::bind(&landmarks::laser_scan_callback, this, std::placeholders::_1));
     } else {
       // create subscriber to laser scan data
       laser_scan_data_ = create_subscription<sensor_msgs::msg::LaserScan>(
