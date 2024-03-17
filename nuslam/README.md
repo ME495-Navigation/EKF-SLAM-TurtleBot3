@@ -2,11 +2,17 @@
 A library for implementing EKF SLAM on the Turtlebot.
 
 # Launchfile
+Use `ros2 launch nuslam turtlebot_bringup.launch.xml` on the turtlebot
+to launch the required nodes to run EKF SLAM using Unknown Data Association.
+
+Use `ros2 launch nuslam pc_bringup.launch.xml` on your computer to visualise the
+data from the real robot in Rviz.
+
 Use `ros2 launch nuslam slam.launch.xml cmd_src:=teleop robot:=nusim use_rviz:=true`
-to launch the required nodes to control the turtlebot (using Fake Sensor Data).
+to launch the required nodes to control the turtlebot in simulation (using Fake Sensor Data).
 
 Use `ros2 launch nuslam unknown_data_assoc.launch.xml cmd_src:=teleop robot:=nusim use_rviz:=true`
-to launch the required nodes to control the turtlebot (using Unknown Data Association).
+to launch the required nodes to control the turtlebot in simulation (using Unknown Data Association).
 
 Use `ros2 launch nuslam landmark_detect.launch.xml cmd_src:=teleop robot:=nusim use_rviz:=true`
 to launch landmark detection test simulation.
