@@ -671,7 +671,7 @@ private:
 
     // broadcast the robot's map to odom transform
     geometry_msgs::msg::TransformStamped map_t;
-    map_t.header.stamp = current_time;
+    map_t.header.stamp = rclcpp::Clock().now();
     map_t.header.frame_id = "map";
     map_t.child_frame_id = odom_msg_.header.frame_id;
     map_t.transform.translation.x = map_to_odom_tf.translation().x;

@@ -84,25 +84,12 @@
   <!-- real -->
   <group if="$(eval '\'$(var robot)\' == \'localhost\' and \'$(var use_rviz)\' == \'false\'')">
     <node
-        pkg='nuturtle_control'
-        exec='odometry'
-        args = "--remap joint_states:=blue/joint_states" >
-        <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
-        <param from="$(find-pkg-share nusim)/config/basic_world.yaml" />  
-        <param name="body_id" value = "blue/base_footprint" />
-        <param name = "wheel_left" value = "wheel_left_joint" />
-        <param name = "wheel_right" value = "wheel_right_joint" />
-    </node>
-    <node
       pkg='nuturtle_control'
       exec='turtle_control' 
       args = "--remap joint_states:=blue/joint_states" >
       <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
     </node>
     <node pkg='numsr_turtlebot' exec='numsr_turtlebot' />
-    <!-- static transform publisher -->
-    <node pkg = "tf2_ros" exec="static_transform_publisher" 
-    args = " --frame-id nusim/world --child-frame-id odom" />
     <include file="$(find-pkg-share hls_lfcd_lds_driver)/launch/hlds_laser.launch.py">
       <arg name="port" value="/dev/ttyUSB0" />
       <arg name="frame_id" value="green/base_scan"/>

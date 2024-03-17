@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /MarkerArray1/Topic1
         - /LaserScan1/Topic1
       Splitter Ratio: 0.5
     Tree Height: 746
@@ -78,6 +77,10 @@ Visualization Manager:
           Value: true
         green/imu_link:
           Value: true
+        green/wheel_left_link:
+          Value: true
+        green/wheel_right_link:
+          Value: true
         map:
           Value: true
         nusim/world:
@@ -104,16 +107,19 @@ Visualization Manager:
               blue/wheel_right_link:
                 {}
           map:
-            {}
-          odom:
-            green/base_footprint:
-              green/base_link:
-                green/base_scan:
-                  {}
-                green/caster_back_link:
-                  {}
-                green/imu_link:
-                  {}
+            odom:
+              green/base_footprint:
+                green/base_link:
+                  green/base_scan:
+                    {}
+                  green/caster_back_link:
+                    {}
+                  green/imu_link:
+                    {}
+                  green/wheel_left_link:
+                    {}
+                  green/wheel_right_link:
+                    {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -175,18 +181,6 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
-      Name: MarkerArray
-      Namespaces:
-        {}
-      Topic:
-        Depth: 5
-        Durability Policy: Transient Local
-        History Policy: Keep All
-        Reliability Policy: Best Effort
-        Value: /clusters
-      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -280,10 +274,22 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: MapObstacles
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /map_obstacles
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: nusim/world
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -326,7 +332,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 4.458236217498779
+      Distance: 5.030966758728027
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -341,10 +347,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5303992033004761
+      Pitch: 0.9253984093666077
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.4285824298858643
+      Yaw: 2.758585214614868
     Saved: ~
 Window Geometry:
   Displays:
