@@ -1,5 +1,18 @@
 /// \file
 /// \brief Detect landmarks in the laser scan data
+///
+/// PARAMETERS:
+///   obstacles.r (double): The radius of the obstacles
+///   real_lidar (bool): Whether the lidar data is real or simulated
+///
+/// PUBLISHERS:
+///   clusters (visualization_msgs::msg::MarkerArray): The clusters of points in the laser scan data
+///   landmarks (visualization_msgs::msg::MarkerArray): The landmarks detected in the laser scan data
+///   landmarks_data (nuslam::msg::Landmarks): The detected landmarks data
+///
+/// SUBSCRIBERS:
+///   scan (sensor_msgs::msg::LaserScan): The laser scan data
+///   red/lidar (sensor_msgs::msg::LaserScan): The laser scan data from the red robot
 
 #include <chrono>
 #include <functional>

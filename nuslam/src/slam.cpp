@@ -12,12 +12,23 @@
 ///     wheel_right (string): The name of the right wheel.
 ///     wheel_radius (double): The radius of the wheels.
 ///     track_width (double): The separation between the wheels.
+///     min_distance (double): The minimum distance for data association.
+///     use_data_association (bool): A flag to use data association.
+///     process_noise_covariance (double): The process noise covariance.
+///     measurement_sensor_noise (double): The measurement sensor noise.
+///     measurement_sensor_noise_covariance (double): The measurement sensor noise covariance.
+///     obstacles_r (double): The radius of the obstacles.
 ///
 /// PUBLISHERS:
 ///     odom (nav_msgs/msg/Odometry): The turtlebot odometry message.
+///     blue/path (nav_msgs/msg/Path): The turtlebot odometry path.
+///     green/path (nav_msgs/msg/Path): The turtlebot map path.
+///     map_obstacles (visualization_msgs/msg/MarkerArray): The turtlebot map obstacles.
 ///
 /// SUBSCRIBERS:
 ///    joint_states (sensor_msgs/msg/JointState): The joint states of the turtlebot.
+///    fake_sensor (visualization_msgs/msg/MarkerArray): The fake sensor data.
+///    landmarks_data (nuslam/msg/Landmarks): The landmarks data.
 ///
 /// SERVICES:
 ///     initial_pose (nuslam/srv/InitialPose): The initial pose of the turtle.
