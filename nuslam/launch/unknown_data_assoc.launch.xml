@@ -104,13 +104,13 @@
         <param name = "wheel_left" value = "wheel_left_joint" />
         <param name = "wheel_right" value = "wheel_right_joint" />
         <param name = "use_data_association" value = "true" />
-        <param name = "process_noise_covariance" value = "0.1" />
-        <param name = "measurement_sensor_noise_covariance" value = "0.01" />
+        <param name = "process_noise_covariance" value = "0.001" />
+        <param name = "measurement_sensor_noise_covariance" value = "0.1" />
     </node>
     <node
       pkg='nuslam'
       exec='landmarks'>
-      <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml" />
+      <param name="obstacles_r" value="0.11" />
       <param name="real_lidar" value="true" />
     </node>
   </group>
