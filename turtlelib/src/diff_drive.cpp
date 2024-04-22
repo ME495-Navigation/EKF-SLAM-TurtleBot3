@@ -98,13 +98,11 @@ namespace turtlelib{
         //update the wheel position
         this->wheel_config = wheel_position;
 
-// ############################## Begin_Citation [5] ##############################
         // fk calculation, refer to eq in doc
         Twist2D body_twist;
         body_twist.omega =  ((wheel_vel.rw - wheel_vel.lw)*wheel_radius)/(2*half_trackwidth);
         body_twist.x = 0.5*wheel_radius*(wheel_vel.rw + wheel_vel.lw);
         body_twist.y = 0.0;
-// ############################## End_Citation [5] ###############################
         
         robot_config *= integrate_twist(body_twist);
         
